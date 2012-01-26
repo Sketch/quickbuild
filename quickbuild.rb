@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
-# quickbuild - MUSH building tool.
-# Authored by Alan Schwartz, 1999,
-# Maintained by Ryan Dowell, Sketch@M*U*S*H, 2012
+# Quickbuild - MUSH building tool.
+# Original Quickbuild authored by Alan Schwartz, 1999
+# Improved, Ruby version by Ryan Dowell, Sketch@M*U*S*H, 2012
 # Released under the same license terms as PennMUSH
 #
 # Usage: quickbuild < infile > output.txt

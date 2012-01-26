@@ -2,6 +2,8 @@ Quickbuild is a Ruby script that lets you quickly lay out a MUSH area (a set of 
 
 The latest version of Quickbuild is available at:
 	https://github.com/Sketch/Quickbuild
+Original Perl version of Quickbuild (by Alan Schwartz) is available at:
+	http://download.pennmush.org/Accessories/
 
 Send comments, bug reports, and words of praise to:
 	Sketch@M*U*S*H
