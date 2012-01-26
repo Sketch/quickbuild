@@ -1,14 +1,14 @@
 =head1 NAME
 
-B<quickbuild> - MUSH offline building tool
+B<Quickbuild> - MUSH offline building tool
 
 =head1 SYNOPSIS
 
-B<quickbuild> [options] < area.qb > area.msh
+B<Quickbuild> [options] < area.qb > area.msh
 
 =head1 DESCRIPTION
 
-B<quickbuild> is a Ruby script that lets you quickly lay out a MUSH area
+B<Quickbuild> is a Ruby script that lets you quickly lay out a MUSH area
 (a set of rooms connected by exits, optionally zoned and/or parented)
 in an easy-to-use format. It converts this file into uploadble MUSH code.
 It's smart about cardinal directions (aliases and reverse exits),
@@ -18,7 +18,7 @@ produces uploadable MUSH code on stdout.
 
 =head2 Quickbuild File Format
 
-An input file for B<quickbuild> can include the following:
+An input file for B<Quickbuild> can include the following:
 
 =over 4
 
@@ -75,20 +75,20 @@ You can set a default zone to be assigned to rooms with the line
 
   ROOM ZONE: <dbref of ZMO> or "Room Name"
 
-B<quickbuild> will generate @chzone commands setting the zone of any rooms
+B<Quickbuild> will generate @chzone commands setting the zone of any rooms
 defined after the ROOM ZONE: command. Note that a room is defined when it
 is first used in the input. You may use additional ROOM ZONE: commands
 to change the active room zone.
 
 If you provide a room name instead of a dbref, the room will be
-created by the script quickbuild generates. You can use the 
+created by the script Quickbuild generates. You can use the 
 IN..ENDIN block to add code to this room (for example, to set it
 floating).
 
 Similarly, you can set default exit zones, room parents, and exit parents
 with EXIT ZONE:, ROOM PARENT:, and EXIT PARENT: commands. Note that
 if you're not providing dbrefs, you should be providing a room
-name, even if you're setting exit zone/parent. That is, quickbuild
+name, even if you're setting exit zone/parent. That is, Quickbuild
 will generate a room as the exit parent (which doesn't hurt).
 
 =item Flags
@@ -128,7 +128,7 @@ program. It  works like this:
 3. Leading whitespace on a line is otherwise stripped,
   and indicates the line is a continuation of the previous line
 
-4. (not implemented by B<quickbuild>) Lines starting with '>' 
+4. (not implemented by B<Quickbuild>) Lines starting with '>' 
    (in the first column) are treated
   as continuations and are converted from plain ASCII to
   "MUSH-ready" ASCII, i.e. spaces -> %b, [ -> \[, etc. %r
@@ -137,6 +137,7 @@ program. It  works like this:
 5. In any other line, each tab is converted to a space.
 
 =back
+
 =head1 OPTIONS
 
 =over 4
@@ -147,7 +148,7 @@ Prints a usage summary
 
 =item --nobrackets
 
-By default, B<quickbuild> assumes that you like the <B>racket style
+By default, B<Quickbuild> assumes that you like the <B>racket style
 of exit naming, where the abbreviation in the brackets is the short
 name for the exit. If you don't like this, use the --nobrackets
 option, which strips bracketing out from exit names.
@@ -164,7 +165,7 @@ Don't use any configuration file.
 
 =head1 CONFIGURATION FILE
 
-By default, B<quickbuild> uses a configuration file to determine
+By default, B<Quickbuild> uses a configuration file to determine
 aliases for exits (e.g., "n" for "<N>orth;north;nort;nor;no;n")
 and reverse exits (e.g. "n" and "s"). It searches for this file
 in the following order:
@@ -325,10 +326,10 @@ Exits originating from the same source room must have unique names.
 
 =head1 AUTHOR
 
-B<quickbuild> was originally coded by Alan Schwartz. The original Perl
+B<Quickbuild> was originally coded by Alan Schwartz. The original Perl
 version is available here:
 	http://download.pennmush.org/Accessories/
-	
+
 The modern Ruby version is authored by Ryan Dowell, and distributed under the
-same license as PennMUSH. The latest version of Quickbuild is available here:
+same license as PennMUSH. The latest version of B<Quickbuild> is available here:
 	https://github.com/Sketch/Quickbuild
