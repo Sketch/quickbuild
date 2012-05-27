@@ -17,10 +17,11 @@
 # + [:statename, lambda] is basically syntactic sugar for obj.define_singleton_method('state_statename', lambda)
 class SimpleAction
 	attr_accessor :pattern
-	def initialize(pattern)
+	def initialize(pattern, *args)
 		# raise TypeError if ! pattern.respond_to(:match)
 		pattern.match('Test string')
 		@pattern = pattern
+		args.each {|arg| self + arg}
 	end
 	def getstate(obj)
 		case obj

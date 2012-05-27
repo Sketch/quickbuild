@@ -66,13 +66,13 @@ def buffer_escape(s)
 end
 
 syntaxp = StateMachine.new(:default)
-syntaxp.push Action.new(/^\s*$/) +
-	[:default, lambda{|s| [s,[[:NOP]] ]}] +
-	[:in,      lambda{|s| [s,[[:NOP]] ]}] +
-	[:on,      lambda{|s| [s,[[:NOP]] ]}]
-syntaxp.push Action.new(/^@@/) +
-	[:in, lambda{|s| [s,[[:NOP]] ]}] +
-	[:on, lambda{|s| [s,[[:NOP]] ]}]
+syntaxp.push Action.new(/^\s*$/,
+	[:default, lambda{|s| [s,[[:NOP]] ]}],
+	[:in,      lambda{|s| [s,[[:NOP]] ]}],
+	[:on,      lambda{|s| [s,[[:NOP]] ]}] )
+syntaxp.push Action.new(/^@@/,
+	[:in, lambda{|s| [s,[[:NOP]] ]}],
+	[:on, lambda{|s| [s,[[:NOP]] ]}] )
 
 closebracket = lambda {|s,input,e|
 	str = (s[:bracketline] == e[:linenumber] - 1) ? '%r' : ''
@@ -81,21 +81,21 @@ closebracket = lambda {|s,input,e|
 	command = [[:BUFFER_EXIT, s[:roomname], s[:exitname], str]] if s[:state] == :ON
 	return [s.merge({:bracketline => e[:linenumber]}), command]
 }
-syntaxp.push Action.new(/^>/) +
-	[:in, closebracket] +
-	[:on, closebracket]
-syntaxp.push Action.new(/^#.*$/) +
-	[:default, lambda {|s| [s, [[:NOP]]]}] +
-	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}] +
-	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}]
-syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/) +
-	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}]
+syntaxp.push Action.new(/^>/,
+	[:in, closebracket],
+	[:on, closebracket])
+syntaxp.push Action.new(/^#.*$/,
+	[:default, lambda {|s| [s, [[:NOP]]]}],
+	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
+	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
+syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/,
+	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
 #syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(.*)$/) +
 #	[:default, lambda {|s,i,e|
 #		# Needs differentiation betwen Database reference numbers and names.
 #		 [:default, [[:ROOM_PARENT, e[:matchdata][1]]]]
 #	}]
-syntaxp.push ActionWIND.new(/^"(.*?)"\s*:\s*("(.*?)"(\s*(<?->)\s*"(.*?)")+)$/) +
+syntaxp.push ActionWIND.new(/^"(.*?)"\s*:\s*("(.*?)"(\s*(<?->)\s*"(.*?)")+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
 		lastroom = e[:matchdata][3]
@@ -106,23 +106,23 @@ syntaxp.push ActionWIND.new(/^"(.*?)"\s*:\s*("(.*?)"(\s*(<?->)\s*"(.*?)")+)$/) +
 			commands.push([:CREATE_REVERSE_EXIT, exitname, lastroom, match[1]]) if match[0] == "<->"
 		}
 		return {:state => s, :action => commands}
-	}]
-syntaxp.push ActionWIND.new(/^IN "(.*)"$/) +
-	[:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}]
-syntaxp.push ActionWIND.new(/^ON "(.*)" FROM "(.*)"$/) +
-	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][1], :exitname => e[:matchdata][2]}, [[:NOP]] ]}]
-syntaxp.push Action.new(/^ENDIN$/) +
-	[:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}] +
-	[:default, lambda {|s,i,e| [:error,   [[:ERROR, e[:linenumber], "ENDIN outside of IN-block."]] ]}] +
-	[:on,      lambda {|s,i,e| [:default, [[:WARNING, e[:linenumber], "ENDIN inside ON-block."]] ]}]
-syntaxp.push Action.new(/^ENDON$/) +
-	[:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}] + 
-	[:default, lambda {|s,i,e| [:error,   [[:ERROR, e[:linenumber], "ENDON outside of ON-block."]] ]}] +
-	[:in,      lambda {|s,i,e| [:default, [[:WARNING, e[:linenumber], "ENDON inside IN-block."]] ]}]
-syntaxp.push Action.new(/^.+$/) +
-	[:default, lambda {|s,i,e| [:error, [[:ERROR, e[:linenumber], "Unrecognized command."]] ]}] +
-	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}] +
-	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}]
+	}])
+syntaxp.push ActionWIND.new(/^IN "(.*)"$/,
+	[:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
+syntaxp.push ActionWIND.new(/^ON "(.*)" FROM "(.*)"$/,
+	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][1], :exitname => e[:matchdata][2]}, [[:NOP]] ]}] )
+syntaxp.push Action.new(/^ENDIN$/,
+	[:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
+	[:default, lambda {|s,i,e| [:error,   [[:ERROR, e[:linenumber], "ENDIN outside of IN-block."]] ]}],
+	[:on,      lambda {|s,i,e| [:default, [[:WARNING, e[:linenumber], "ENDIN inside ON-block."]] ]}] )
+syntaxp.push Action.new(/^ENDON$/,
+	[:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
+	[:default, lambda {|s,i,e| [:error,   [[:ERROR, e[:linenumber], "ENDON outside of ON-block."]] ]}],
+	[:in,      lambda {|s,i,e| [:default, [[:WARNING, e[:linenumber], "ENDON inside IN-block."]] ]}] )
+syntaxp.push Action.new(/^.+$/,
+	[:default, lambda {|s,i,e| [:error, [[:ERROR, e[:linenumber], "Unrecognized command."]] ]}],
+	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
+	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
 #syntaxp.push ActionWIND.new(/^DESC(RIBE)? "(.*?)"
 #syntaxp.push Action.new(/^&(\S+)\s+"(.*?)"\s*=(.*)$/) +
