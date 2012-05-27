@@ -54,6 +54,11 @@ end
 # Use .push() to push actions into the state machine.
 # StateMachine is FIFO for pattern matching.
 # 
+# States can be a symbol or string, but most often they are a hash with a
+# :state key that is the state. Only the state[:state] value is matched
+# against the action list, but the whole state object is passed to the
+# action function.
+#
 # Supports fallthrough (invoke returns nil), but cannot simultaneously fallthrough and change state.
 class StateMachine
 	attr_accessor :actions, :state
@@ -88,5 +93,8 @@ class StateMachine
 	def push(action)
 		raise TypeError if ! action.respond_to?(:invoke) # Fail early.
 		@actions.push(action)
+	end
+	def to_s()
+		return "State: #{@state}"
 	end
 end
