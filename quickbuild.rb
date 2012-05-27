@@ -53,15 +53,41 @@ class ActionWIND < SimpleAction
 	end	
 end
 
+def buffer_prefix(s)
+	return (/^\s+/.match(s) ? "\n" : '') + s.sub(/^\s+/,'').gsub(/\t/,' ')
+end
+
+ESCAPE_CHARS = ['\\','$','%','(',')',',',';','[',']','^','{','}',"\r\n", "\n", "\r"]
+ESCAPE_WITH = ['\\\\','\\$','\\%','\\(','\\)','\\,','\\;','\\[','\\]','\\^','\\{','\\}','%r','%r','%r']
+ESCAPE_REGEXP = Regexp.union(ESCAPE_CHARS)
+ESCAPE_HASH = Hash[ESCAPE_CHARS.zip(ESCAPE_WITH)]
+def buffer_escape(s)
+	return s.gsub(ESCAPE_REGEXP, ESCAPE_HASH)
+end
+
 syntaxp = StateMachine.new(:default)
 syntaxp.push Action.new(/^\s*$/) +
 	[:default, lambda{|s| [s,[[:NOP]] ]}] +
 	[:in,      lambda{|s| [s,[[:NOP]] ]}] +
 	[:on,      lambda{|s| [s,[[:NOP]] ]}]
+syntaxp.push Action.new(/^@@/) +
+	[:in, lambda{|s| [s,[[:NOP]] ]}] +
+	[:on, lambda{|s| [s,[[:NOP]] ]}]
+
+closebracket = lambda {|s,input,e|
+	str = (s[:bracketline] == e[:linenumber] - 1) ? '%r' : ''
+	str += buffer_escape(input.sub(/^>/,''))
+	command = [[:BUFFER_ROOM, s[:roomname], str]] if s[:state] == :IN
+	command = [[:BUFFER_EXIT, s[:roomname], s[:exitname], str]] if s[:state] == :ON
+	return [s.merge({:bracketline => e[:linenumber]}), command]
+}
+syntaxp.push Action.new(/^>/) +
+	[:in, closebracket] +
+	[:on, closebracket]
 syntaxp.push Action.new(/^#.*$/) +
 	[:default, lambda {|s| [s, [[:NOP]]]}] +
-	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:name], e[:matchdata][0]]] ]}] +
-	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], e[:matchdata][0]]] ]}]
+	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}] +
+	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}]
 syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/) +
 	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}]
 #syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(.*)$/) +
@@ -95,8 +121,8 @@ syntaxp.push Action.new(/^ENDON$/) +
 	[:in,      lambda {|s,i,e| [:default, [[:WARNING, e[:linenumber], "ENDON inside IN-block."]] ]}]
 syntaxp.push Action.new(/^.+$/) +
 	[:default, lambda {|s,i,e| [:error, [[:ERROR, e[:linenumber], "Unrecognized command."]] ]}] +
-	[:in,      lambda {|s,i,e| [s, [[:BUFFER, s[:roomname], e[:matchdata][0]]] ]}] +
-	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], e[:matchdata][0]]] ]}]
+	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}] +
+	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}]
 
 #syntaxp.push ActionWIND.new(/^DESC(RIBE)? "(.*?)"
 #syntaxp.push Action.new(/^&(\S+)\s+"(.*?)"\s*=(.*)$/) +
