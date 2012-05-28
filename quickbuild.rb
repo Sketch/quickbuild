@@ -90,6 +90,8 @@ syntaxp.push Action.new(/^#.*$/,
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/,
 	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
+syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*"(.*)"\s*"(.*)"/i,
+	[:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 #syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(.*)$/) +
 #	[:default, lambda {|s,i,e|
 #		# Needs differentiation betwen Database reference numbers and names.
