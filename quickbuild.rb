@@ -192,8 +192,6 @@ def parsefile(fileobj, parser)
 	return commands
 end
 
-commandlist = parsefile(ARGF,syntaxp)
-commandlist.each {|cmd| puts "#{cmd}" }
 
 # Section: Opcodes -> Graph
 #
@@ -327,3 +325,16 @@ end
   #   To avoid sync problems, we use: @dig/tel room and @set me=$base<##>:%l
   # Sort the rooms so that we dig those rooms without parents/zones first,
   # as these are the ZMRs/Parent rooms. 
+
+require 'chatchart'
+commandlist = parsefile(ARGF,syntaxp)
+commandlist.each {|cmd| puts "#{cmd}" }
+graph = process_opcodes(commandlist)
+a = []
+graph.edges {|edge| puts edge }
+graph.edges {|edge|
+	a.push(edge.from_room.id.intern - edge.to_room.id.intern)
+}
+g = ChatChart::Graph.new << a
+ChatChart::SmartLayout[ g ]
+puts g.to_canvas(ChatChart::L1Line)
