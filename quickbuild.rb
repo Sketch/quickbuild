@@ -183,7 +183,11 @@ def parsefile(fileobj, parser)
 		DEBUG "Old state/line: #{state} / #{line}"
 		state, result = parser.invoke(line, extras)
 		DEBUG "New state/Actions: #{state} / #{result}"
-		result.each {|stateresults| commands += stateresults }
+		result.each {|stateresults|
+			stateresults.each {|opcode|
+				commands.push({:linenumber => extras[:linenumber], :opcode => opcode})
+			}
+		}
 	end
 	return commands
 end
