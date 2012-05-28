@@ -35,10 +35,6 @@ VERSION='2.00'
 require 'optparse'
 require './statemachine.rb'
 
-def DEBUG(s)
-	puts "DEBUG: #{s}" if $DEBUG
-end
-
 class Action < SimpleAction
 	def unhandled_call(state, input, extra)
 		return nil if state == :error
@@ -134,6 +130,7 @@ syntaxp.push Action.new(/^.+$/,
 options = {}
 options[:brackets] = true
 options[:brackets_override] = false
+options[:debug] = false
 options[:configfilename] = 'sample.cfg'
 
 OptionParser.new do |opts|
@@ -159,15 +156,15 @@ EOT
 		options[:brackets] = !b
 		options[:brackets_override] = true
 	end
+	opts.on("-d", "--debug", "Show debug output (requires chatchart gem)") do
+		options[:debug] = true
+	end
 	opts.on_tail("-h", "--help", "Show this message") do
 		puts opts
 		exit
 	end
 end.parse!
 # Program exits here if user did --help
-
-DEBUG "#{options}"
-DEBUG "#{ARGV}"
 
 # Section: Main program
 if options[:configfilename] then
@@ -180,9 +177,7 @@ def parsefile(fileobj, parser)
 	commands = []
 	while (line = fileobj.gets) do
 		extras[:linenumber] += 1
-		DEBUG "Old state/line: #{state} / #{line}"
 		state, result = parser.invoke(line, extras)
-		DEBUG "New state/Actions: #{state} / #{result}"
 		result.each {|stateresults|
 			stateresults.each {|opcode|
 				commands.push({:linenumber => extras[:linenumber], :opcode => opcode})
@@ -343,18 +338,28 @@ def process_graph(graph)
 	return output
 end
 
+
 # Section: Execution
-require 'chatchart'
+if options[:debug] then
+	puts "#{options}"
+	puts "#{ARGV}"
+end
+
+require 'chatchart' if options[:debug]
 commandlist = parsefile(ARGF,syntaxp)
-commandlist.each {|cmd| puts "#{cmd}" }
+if options[:debug] then
+	commandlist.each {|cmd| puts "#{cmd}" }
+end
 graph = process_opcodes(commandlist)
-a = []
-graph.edges {|edge| puts edge }
-graph.edges {|edge|
-	a.push(edge.from_room.id.intern - edge.to_room.id.intern)
-}
-g = ChatChart::Graph.new << a
-ChatChart::SmartLayout[ g ]
-puts g.to_canvas(ChatChart::L1Line)
+if options[:debug] then
+	a = []
+	graph.edges {|edge| puts edge }
+	graph.edges {|edge|
+		a.push(edge.from_room.id.intern - edge.to_room.id.intern)
+	}
+	g = ChatChart::Graph.new << a
+	ChatChart::SmartLayout[ g ]
+	puts g.to_canvas(ChatChart::L1Line)
+end
 softcode = process_graph(graph)
 puts(softcode)
