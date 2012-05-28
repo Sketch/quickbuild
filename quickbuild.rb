@@ -49,7 +49,7 @@ end
 class ActionWIND < SimpleAction
 	def unhandled_call(state, input, extra)
 		return nil if state == :error
-		return {:state => nil, :action => [[:WARNING, extra[:linenumber], "#{@pattern} matched inside \"#{getstate(state)}\" state."]]} if state != :default
+		return {:state => nil, :action => [[:WARNING, "#{@pattern} matched inside \"#{getstate(state)}\" state."]]} if state != :default
 	end	
 end
 
@@ -115,14 +115,14 @@ syntaxp.push ActionWIND.new(/^ON "(.*)" FROM "(.*)"$/,
 	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][1], :exitname => e[:matchdata][2]}, [[:NOP]] ]}] )
 syntaxp.push Action.new(/^ENDIN$/,
 	[:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
-	[:default, lambda {|s,i,e| [:error,   [[:ERROR, e[:linenumber], "ENDIN outside of IN-block."]] ]}],
-	[:on,      lambda {|s,i,e| [:default, [[:WARNING, e[:linenumber], "ENDIN inside ON-block."]] ]}] )
+	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDIN outside of IN-block."]] ]}],
+	[:on,      lambda {|s,i,e| [:default, [[:WARNING, "ENDIN inside ON-block."]] ]}] )
 syntaxp.push Action.new(/^ENDON$/,
 	[:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
-	[:default, lambda {|s,i,e| [:error,   [[:ERROR, e[:linenumber], "ENDON outside of ON-block."]] ]}],
-	[:in,      lambda {|s,i,e| [:default, [[:WARNING, e[:linenumber], "ENDON inside IN-block."]] ]}] )
+	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
+	[:in,      lambda {|s,i,e| [:default, [[:WARNING, "ENDON inside IN-block."]] ]}] )
 syntaxp.push Action.new(/^.+$/,
-	[:default, lambda {|s,i,e| [:error, [[:ERROR, e[:linenumber], "Unrecognized command."]] ]}],
+	[:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command."]] ]}],
 	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
@@ -259,22 +259,28 @@ class MuGraph
 	end
 end
 
+def mywarn(stateobj, message, prefix="WARNING:")
+	warn("#{prefix} Line #{stateobj[:location][:linenumber]}: #{message.to_s()}")
+end
 def die(stateobj, message)
-	abort(message.to_s())
+	mywarn(stateobj, message, "ERROR:")
+	abort
 end
 #
 # Take an opcode array and output a graph.
 def process_opcodes(opcode_array)
 	nodelist = []
 	edgelist = []
+	location = { :linenumber => 0 }
 	stateobj = {
+		:location => location,
 		:reverse_exits => {},
 		:exit_aliases => {},
 		:graph => MuGraph.new()
 	}
 	graph = stateobj[:graph]
 	opcode_array.each {|h|
-		linenumber = h[:linenumber]
+		location[:linenumber] = h[:linenumber]
 		operation, *operand = h[:opcode]
 		case operation
 		when :NOP
@@ -282,7 +288,7 @@ def process_opcodes(opcode_array)
 		when :ERROR
 			die(stateobj, operand[0])
 		when :WARN
-			warn(operand[0])
+			mywarn(stateobj, operand[0])
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
 		when :CREATE_ROOM # Do not error/warn if it exists.
