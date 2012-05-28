@@ -195,6 +195,126 @@ end
 commandlist = parsefile(ARGF,syntaxp)
 commandlist.each {|cmd| puts "#{cmd}" }
 
+# Section: Opcodes -> Graph
+#
+# Here we read the opcodes from the last section.
+# This state machine has states that only affect its output, not input
+# processing. This machine is simple enough that a switch will do.
+class RoomNode
+	attr_accessor :id
+	def initialize(id)
+		@id = id
+		@edges = []
+		@properties = {}
+	end
+	def add_exit(exitedge)
+		@edges.push(exitedge)
+	end
+	def lookup_exit(id)
+		return @edges[id]
+	end
+	def to_s()
+		return @id
+	end
+end
+
+class ExitEdge
+	attr_accessor :from_room, :to_room
+	def initialize(id, from_room, to_room)
+		@id = id
+		@from_room = from_room
+		@to_room = to_room
+		@properties = {}
+	end
+	def to_s()
+		return [@from_room.to_s(), '-->', @to_room.to_s()].join(' ')
+	end
+end
+
+class MuGraph
+	def initialize()
+		@nodes = {}
+		@edgelist = []
+	end
+	def [](x)
+		return @nodes[x]
+	end
+	def new_room(id)
+		@nodes.store(id, RoomNode.new(id))
+	end
+	def new_exit(id, from_room, to_room)
+		exitedge = ExitEdge.new(id, from_room, to_room)
+		from_room.add_exit(exitedge)
+		@edgelist.push(exitedge)
+	end
+	def nodes()
+		if block_given? then
+			@nodes.values {|node| yield(node)}
+		end
+		return @nodes
+	end
+	def edges()
+		if block_given? then
+			@edgelist.each {|exitedge| yield(exitedge)}
+		end
+		return @edgelist
+	end
+end
+
+def die(stateobj, message)
+	abort(message.to_s())
+end
+#
+# Take an opcode array and output a graph.
+def process_opcodes(opcode_array)
+	nodelist = []
+	edgelist = []
+	stateobj = {
+		:reverse_exits => {},
+		:exit_aliases => {},
+		:graph => MuGraph.new()
+	}
+	graph = stateobj[:graph]
+	opcode_array.each {|h|
+		linenumber = h[:linenumber]
+		operation, *operand = h[:opcode]
+		case operation
+		when :NOP
+			# Do nothing
+		when :ERROR
+			die(stateobj, operand[0])
+		when :WARN
+			warn(operand[0])
+		when :REVERSE
+			stateobj[:reverse_exits].store(operand[0], operand[1])
+		when :CREATE_ROOM # Do not error/warn if it exists.
+			graph.new_room(operand[0]) if graph[operand[0]] == nil
+		when :CREATE_EXIT
+			from_room, to_room = graph[operand[1]], graph[operand[2]]
+			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
+			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
+			graph.new_exit(operand[0], from_room, to_room)
+		when :CREATE_REVERSE_EXIT
+			from_room, to_room = graph[operand[1]], graph[operand[2]]
+			reverse = stateobj[:reverse_exits][operand[0]]
+			die(stateobj, "No reverse exit for #{operand[0]}") if ! reverse
+			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
+			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
+			graph.new_exit(reverse, to_room, from_room)
+		when :BUFFER_ROOM
+			# Warn if room doesn't exist
+		when :BUFFER_EXIT
+			# Warn if exit doesn't exist
+		end
+	}
+	return graph
+end
+
+
+# Section: Graph -> Softcode
+#
+# Warn on: unlinked room
+#
   # Print out MUSH code. We do it like this.
   # 1. Dig all of the rooms and store their dbrefs
   # 2. Visit each room, and, while there:
