@@ -217,7 +217,7 @@ class RoomNode
 end
 
 class ExitEdge
-	attr_accessor :from_room, :to_room
+	attr_accessor :id, :from_room, :to_room
 	def initialize(id, from_room, to_room)
 		@id = id
 		@from_room = from_room
@@ -249,7 +249,7 @@ class MuGraph
 		if block_given? then
 			@nodes.values {|node| yield(node)}
 		end
-		return @nodes
+		return @nodes.values
 	end
 	def edges()
 		if block_given? then
@@ -317,21 +317,33 @@ end
 
 # Section: Graph -> Softcode
 #
-# Warn on: unlinked room
+# Warn on: unlinked rooms
 #
-  # Print out MUSH code. We do it like this.
-  # 1. Dig all of the rooms and store their dbrefs
-  # 2. Visit each room, and, while there:
-  #    a. Open all of the exits leading from that room, applying exit code
-  #    b. Apply any room code
-  # We attributes on the player to store room dbrefs. We call them
-  #   $base<##>. Same for exit dbrefs.
-#  my %room_attrs;
-  # 1. Dig all rooms and track their dbrefs. 
-  #   To avoid sync problems, we use: @dig/tel room and @set me=$base<##>:%l
-  # Sort the rooms so that we dig those rooms without parents/zones first,
-  # as these are the ZMRs/Parent rooms. 
+# Print out MUSH code. We do it like this.
+# 1. Dig all of the rooms and store their dbrefs
+# 2. Visit each room, and, while there:
+#    a. Open all of the exits leading from that room, applying exit code
+#    b. Apply any room code
+# We use attributes on the player to store room dbrefs. We call them
+#   #{ATTR_BASE}.${room.id}. Same for exit dbrefs.
+def process_graph(graph)
+	rooms = graph.nodes()
+	exits = graph.edges()
+	# TODO: Sort the nodes so non-chzoned and non-parented rooms come first.
+	# They're probably the ZMR/Parent rooms.
+	output = ["think Digging Rooms"]
+	rooms.each {|roomnode|
+		output << "@dig/teleport #{roomnode.id}"
+		output << "@set me=ROOM.#{roomnode.id}:%l"
+	}
+	exits.each {|exitedge|
+		output << "@teleport [v(ROOM.#{exitedge.from_room.id})]"
+		output << "@open #{exitedge.id}=[v(ROOM.#{exitedge.to_room.id})]"
+	}
+	return output
+end
 
+# Section: Execution
 require 'chatchart'
 commandlist = parsefile(ARGF,syntaxp)
 commandlist.each {|cmd| puts "#{cmd}" }
@@ -344,3 +356,5 @@ graph.edges {|edge|
 g = ChatChart::Graph.new << a
 ChatChart::SmartLayout[ g ]
 puts g.to_canvas(ChatChart::L1Line)
+softcode = process_graph(graph)
+puts(softcode)
