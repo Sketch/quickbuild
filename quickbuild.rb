@@ -35,6 +35,48 @@ VERSION='2.00'
 require 'optparse'
 require './statemachine.rb'
 
+
+# Section: Parse options
+options = {}
+options[:brackets] = true
+options[:brackets_override] = false
+options[:debug] = false
+options[:configfilename] = 'sample.cfg'
+
+OptionParser.new do |opts|
+	opts.banner = <<EOT.split(/\n/).join('\n')
+Quickbuild v#{VERSION}    - offline MUSH building tool
+Released under the same terms as PennMUSH
+
+Quickbuild is a ruby script that lets you quickly lay out a MUSH area
+(a set of rooms connected by exits, optionally zoned and/or parented)
+in an easy-to-use format. It converts this file into uploadble MUSH
+code. It's smart about cardinal directions (aliases and reverse exits),
+<b>racket style, and a few other things.
+
+Usage: quickbuild.rb [options] inputfile > outfile.txt
+EOT
+	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of the default.") do |c|
+		options[:configfilename] << c
+	end
+	opts.on("--no-config-file", "Don't use any configuration file.") do
+		options[:configfilename] = nil
+	end
+	opts.on("-b", "--nobrackets", "Don't use <B>racket style of exit naming.") do |b|
+		options[:brackets] = !b
+		options[:brackets_override] = true
+	end
+	opts.on("-d", "--debug", "Show debug output (requires chatchart gem)") do
+		options[:debug] = true
+	end
+	opts.on_tail("-h", "--help", "Show this message") do
+		puts opts
+		exit
+	end
+end.parse!
+# Program exits here if user did --help
+
+# Section: Input file parser
 class Action < SimpleAction
 	def unhandled_call(state, input, extra)
 		return nil if state == :error
@@ -126,51 +168,6 @@ syntaxp.push Action.new(/^.+$/,
 #syntaxp.push Action.new(/^&(\S+)\s+"(.*?)"\s*=(.*)$/) +
 
 
-# Section: Parse options
-options = {}
-options[:brackets] = true
-options[:brackets_override] = false
-options[:debug] = false
-options[:configfilename] = 'sample.cfg'
-
-OptionParser.new do |opts|
-	opts.banner = <<EOT.split(/\n/).join('\n')
-Quickbuild v#{VERSION}    - offline MUSH building tool
-Released under the same terms as PennMUSH
-
-Quickbuild is a ruby script that lets you quickly lay out a MUSH area
-(a set of rooms connected by exits, optionally zoned and/or parented)
-in an easy-to-use format. It converts this file into uploadble MUSH
-code. It's smart about cardinal directions (aliases and reverse exits),
-<b>racket style, and a few other things.
-
-Usage: quickbuild.rb [options] inputfile > outfile.txt
-EOT
-	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of the default.") do |c|
-		options[:configfilename] << c
-	end
-	opts.on("--no-config-file", "Don't use any configuration file.") do
-		options[:configfilename] = nil
-	end
-	opts.on("-b", "--nobrackets", "Don't use <B>racket style of exit naming.") do |b|
-		options[:brackets] = !b
-		options[:brackets_override] = true
-	end
-	opts.on("-d", "--debug", "Show debug output (requires chatchart gem)") do
-		options[:debug] = true
-	end
-	opts.on_tail("-h", "--help", "Show this message") do
-		puts opts
-		exit
-	end
-end.parse!
-# Program exits here if user did --help
-
-# Section: Main program
-if options[:configfilename] then
-	# parse config file
-end
-
 def parsefile(fileobj, parser)
 	state = :default
 	extras = {:linenumber => 0}
@@ -261,7 +258,7 @@ def die(stateobj, message)
 	mywarn(stateobj, message, "ERROR:")
 	abort
 end
-#
+
 # Take an opcode array and output a graph.
 def process_opcodes(opcode_array)
 	nodelist = []
@@ -346,6 +343,9 @@ if options[:debug] then
 end
 
 require 'chatchart' if options[:debug]
+if options[:configfilename] then
+	# parse config file
+end
 commandlist = parsefile(ARGF,syntaxp)
 if options[:debug] then
 	commandlist.each {|cmd| puts "#{cmd}" }
