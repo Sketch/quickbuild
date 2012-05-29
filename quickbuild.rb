@@ -167,17 +167,15 @@ syntaxp.push Action.new(/^.+$/,
 #syntaxp.push ActionWIND.new(/^DESC(RIBE)? "(.*?)"
 #syntaxp.push Action.new(/^&(\S+)\s+"(.*?)"\s*=(.*)$/) +
 
-
-def parsefile(fileobj, parser)
-	state = :default
+def process_file(fileobj, parser)
 	extras = {:linenumber => 0}
 	commands = []
 	while (line = fileobj.gets) do
 		extras[:linenumber] += 1
-		state, result = parser.invoke(line, extras)
+		result = parser.invoke(line, extras)
 		result.each {|stateresults|
 			stateresults.each {|opcode|
-				commands.push({:linenumber => extras[:linenumber], :opcode => opcode})
+				commands.push({:location => {:file => fileobj.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
 			}
 		}
 	end
@@ -252,7 +250,7 @@ class MuGraph
 end
 
 def mywarn(stateobj, message, prefix="WARNING:")
-	warn("#{prefix} Line #{stateobj[:location][:linenumber]}: #{message.to_s()}")
+	warn("#{prefix} File '#{stateobj[:location][:file]}' Line #{stateobj[:location][:linenumber]}: #{message.to_s()}")
 end
 def die(stateobj, message)
 	mywarn(stateobj, message, "ERROR:")
@@ -263,16 +261,15 @@ end
 def process_opcodes(opcode_array)
 	nodelist = []
 	edgelist = []
-	location = { :linenumber => 0 }
 	stateobj = {
-		:location => location,
+		:location => nil,
 		:reverse_exits => {},
 		:exit_aliases => {},
 		:graph => MuGraph.new()
 	}
 	graph = stateobj[:graph]
 	opcode_array.each {|h|
-		location[:linenumber] = h[:linenumber]
+		stateobj[:location] = h[:location]
 		operation, *operand = h[:opcode]
 		case operation
 		when :NOP
@@ -317,7 +314,7 @@ end
 #    a. Open all of the exits leading from that room, applying exit code
 #    b. Apply any room code
 # We use attributes on the player to store room dbrefs. We call them
-#   #{ATTR_BASE}.${room.id}. Same for exit dbrefs.
+#   #{ATTR_BASE}.#{room.id}. Same for exit dbrefs.
 def process_graph(graph)
 	rooms = graph.nodes()
 	exits = graph.edges()
@@ -346,7 +343,7 @@ require 'chatchart' if options[:debug]
 if options[:configfilename] then
 	# parse config file
 end
-commandlist = parsefile(ARGF,syntaxp)
+commandlist = process_file(ARGF,syntaxp)
 if options[:debug] then
 	commandlist.each {|cmd| puts "#{cmd}" }
 end
