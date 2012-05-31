@@ -277,7 +277,7 @@ def process_opcodes(opcode_array)
 			# Do nothing
 		when :ERROR
 			die(stateobj, operand[0])
-		when :WARN
+		when :WARNING
 			mywarn(stateobj, operand[0])
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
