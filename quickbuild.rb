@@ -144,6 +144,7 @@ syntaxp.push ActionWIND.new(/^"(.*?)"\s*:\s*("(.*?)"(\s*(<?->)\s*"(.*?)")+)$/,
 			commands.push([:CREATE_ROOM, match[1]])
 			commands.push([:CREATE_EXIT, exitname, lastroom, match[1]])
 			commands.push([:CREATE_REVERSE_EXIT, exitname, lastroom, match[1]]) if match[0] == "<->"
+			lastroom = match[1]
 		}
 		return {:state => s, :action => commands}
 	}])
