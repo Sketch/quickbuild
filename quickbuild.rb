@@ -151,7 +151,7 @@ syntaxp.push ActionWIND.new(/^"(.*?)"\s*:\s*("(.*?)"(\s*(<?->)\s*"(.*?)")+)$/,
 syntaxp.push ActionWIND.new(/^IN "(.*)"$/,
 	[:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
 syntaxp.push ActionWIND.new(/^ON "(.*)" FROM "(.*)"$/,
-	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][1], :exitname => e[:matchdata][2]}, [[:NOP]] ]}] )
+	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][2], :exitname => e[:matchdata][1]}, [[:NOP]] ]}] )
 syntaxp.push Action.new(/^ENDIN$/,
 	[:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
 	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDIN outside of IN-block."]] ]}],
