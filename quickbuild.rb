@@ -92,7 +92,7 @@ class ActionWIND < SimpleAction
 end
 
 def buffer_prefix(s)
-	return (/^\s+/.match(s) ? "\n" : '') + s.sub(/^\s+/,'').gsub(/\t/,' ')
+	return (/^\s+/.match(s) ? "" : "\n") + s.sub(/^\s+/,'').gsub(/\t/,' ')
 end
 
 ESCAPE_CHARS = ['\\','$','%','(',')',',',';','[',']','^','{','}',"\r\n", "\n", "\r"]
@@ -193,17 +193,24 @@ class RoomNode
 	attr_accessor :id
 	def initialize(id)
 		@id = id
-		@edges = []
+		@edges = {}
+		@buffer = ''
 		@properties = {}
 	end
 	def add_exit(exitedge)
-		@edges.push(exitedge)
+		@edges.store(exitedge.id, exitedge)
 	end
 	def lookup_exit(id)
 		return @edges[id]
 	end
 	def to_s()
 		return @id
+	end
+	def append_buffer(s)
+		@buffer.concat(s)
+	end
+	def buffer()
+		@buffer.lstrip
 	end
 end
 
@@ -213,10 +220,17 @@ class ExitEdge
 		@id = id
 		@from_room = from_room
 		@to_room = to_room
+		@buffer = ''
 		@properties = {}
 	end
 	def to_s()
 		return [@from_room.to_s(), '-->', @to_room.to_s()].join(' ')
+	end
+	def append_buffer(s)
+		@buffer.concat(s)
+	end
+	def buffer()
+		@buffer.lstrip
 	end
 end
 
@@ -296,9 +310,19 @@ def process_opcodes(opcode_array)
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
 			graph.new_exit(reverse, to_room, from_room)
 		when :BUFFER_ROOM
-			# Warn if room doesn't exist
+			room = graph[operand[0]]
+			if room == nil then
+				mywarn(stateobj, "Room #{operand[0]} doesn't exist")
+				room = graph.new_room(operand[0])
+			end
+			room.append_buffer(operand[1])
 		when :BUFFER_EXIT
-			# Warn if exit doesn't exist
+			# This should warn and create an unlinked exit, per quickbuild v1
+			room = graph[operand[0]]
+			die(stateobj, "Room #{operand[0]} doesn't exist") if room == nil
+			exitedge = room.lookup_exit(operand[1])
+			die(stateobj, "Exit #{operand[1]} doesn't exist") if exitedge == nil
+			exitedge.append_buffer(operand[2])
 		end
 	}
 	return graph
@@ -325,10 +349,12 @@ def process_graph(graph)
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.id}"
 		output << "@set me=ROOM.#{roomnode.id}:%l"
+		output << roomnode.buffer if roomnode.buffer != ''
 	}
 	exits.each {|exitedge|
 		output << "@teleport [v(ROOM.#{exitedge.from_room.id})]"
 		output << "@open #{exitedge.id}=[v(ROOM.#{exitedge.to_room.id})]"
+		output << exitedge.buffer if exitedge.buffer != ''
 	}
 	return output
 end
