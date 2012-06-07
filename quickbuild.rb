@@ -128,6 +128,8 @@ syntaxp.push Action.new(/^#.*$/,
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/,
 	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
+syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*"(.*)"\s*"(.*)"/i,
+	[:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*"(.*)"\s*"(.*)"/i,
 	[:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 #syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(.*)$/) +
@@ -245,7 +247,8 @@ class MuGraph
 	def new_room(id)
 		@nodes.store(id, RoomNode.new(id))
 	end
-	def new_exit(id, from_room, to_room)
+	def new_exit(id, from_room, to_room, aliases = {})
+		id = aliases[id] || id
 		exitedge = ExitEdge.new(id, from_room, to_room)
 		from_room.add_exit(exitedge)
 		@edgelist.push(exitedge)
@@ -293,6 +296,8 @@ def process_opcodes(opcode_array)
 			die(stateobj, operand[0])
 		when :WARNING
 			mywarn(stateobj, operand[0])
+		when :ALIAS
+			stateobj[:exit_aliases].store(operand[0], operand[1])
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
 		when :CREATE_ROOM # Do not error/warn if it exists.
@@ -301,14 +306,14 @@ def process_opcodes(opcode_array)
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
-			graph.new_exit(operand[0], from_room, to_room)
+			graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases])
 		when :CREATE_REVERSE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			reverse = stateobj[:reverse_exits][operand[0]]
 			die(stateobj, "No reverse exit for #{operand[0]}") if ! reverse
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
-			graph.new_exit(reverse, to_room, from_room)
+			graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases])
 		when :BUFFER_ROOM
 			room = graph[operand[0]]
 			if room == nil then
