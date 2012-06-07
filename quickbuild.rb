@@ -40,6 +40,7 @@ require './statemachine.rb'
 options = {}
 options[:brackets] = true
 options[:brackets_override] = false
+options[:bidirectional_reverse] = true
 options[:debug] = false
 options[:configfilename] = 'qb.cfg'
 
@@ -65,6 +66,9 @@ EOT
 	opts.on("-b", "--nobrackets", "Don't use <B>racket style of exit naming.") do |b|
 		options[:brackets] = !b
 		options[:brackets_override] = true
+	end
+	opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
+		options[:bidirectional_reverse] = false
 	end
 	opts.on("-d", "--debug", "Show debug output (requires chatchart gem)") do
 		options[:debug] = true
@@ -276,7 +280,7 @@ def die(stateobj, message)
 end
 
 # Take an opcode array and output a graph.
-def process_opcodes(opcode_array)
+def process_opcodes(opcode_array, options = {})
 	nodelist = []
 	edgelist = []
 	stateobj = {
@@ -300,6 +304,7 @@ def process_opcodes(opcode_array)
 			stateobj[:exit_aliases].store(operand[0], operand[1])
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
+			stateobj[:reverse_exits].store(operand[1], operand[0]) if options[:bidirectional_reverse]
 		when :CREATE_ROOM # Do not error/warn if it exists.
 			graph.new_room(operand[0]) if graph[operand[0]] == nil
 		when :CREATE_EXIT
@@ -386,7 +391,7 @@ if options[:debug] then
 	commandlist.each {|cmd| puts "#{cmd}" }
 end
 
-graph = process_opcodes(commandlist)
+graph = process_opcodes(commandlist, options)
 
 if options[:debug] then
 	a = []
