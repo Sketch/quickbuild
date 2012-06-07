@@ -1,0 +1,23 @@
+# Some useful aliases that automatically expand
+# Define these with <b>rackets
+alias	"n"	"North <N>;north;nort;nor;no;n"
+alias	"s"	"South <S>;south;sout;sou;so;s"
+alias	"e" 	"East <E>;east;eas;ea;e"
+alias	"w" 	"West <W>;west;wes;we;w"
+alias	"ne"	"Northeast <NE>;northeast;ne"
+alias	"nw"	"Northwest <NW>;northwest;nw"
+alias	"se"	"Southeast <SE>;southeast;se"
+alias	"sw"	"Southwest <SW>;southwest;sw"
+alias	"u"	"Up <U>;up;u"
+alias	"d" 	"Down <D>;down;dow;do;d",	
+alias	"out"	"Out <O>;back;leave;exit;out;o"
+
+
+# Some exits for which we know the reverse direction
+# These use pre-expanded names in the case of aliases.
+reverse	"n"	"s"
+reverse	"e"	"w"
+reverse	"nw"	"se"
+reverse	"sw"	"ne"
+reverse	"u"	"d"
+

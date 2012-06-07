@@ -1,0 +1,67 @@
+Small features:
+
+* Add ATTR_BASE command
+ - A simple state swap in process_opcodes(),
+   But ATTR_BASE has to be saved to every node and edge in the grid.
+   Sane default to "ROOM.", only save if ATTR_BASE != "ROOM."
+
+* Add ROOM PARENT command
+* Add ROOM ZONE command
+* Add ROOM FLAGS command
+* Add EXIT PARENT command
+* Add EXIT ZONE command
+* Add EXIT FLAGS command
+
+* Complete "IN" and "ON" parsing
+ - Might not be possible due to MPP, in which case I scrap MPP.
+
+* Improve attribute escaping.
+ - Spaces aren't valid in attribute names! "ROOM.Emerald Coast" is invalid!
+
+* Add INCLUDE command
+ - Handled recursively in process_file() in .each .each. Easy
+
+* Add STARTING-IN command
+ - STARTING-IN specifies that the room the user is standing in is X
+ - (also considering a STARTING-ON, but you can't be -IN- an exit.)
+
+* Add DESC(RIBE) command
+ - Shorthand for IN "Name" \n @describe here=TEXT \n ENDIN
+
+* Add '&' command
+ - Shorthand for IN "Name" \n &attr here=text \n ENDIN
+
+
+Big features:
+* Add room identifications
+ - "s" : "Maze"alpha <-> "Maze"beta
+ - Identifiers have no spaces
+ - I anticipate this won't actually be difficult. :)
+
+* No-@teleport building.
+ - Add a depth-first search to the graph and walk in while building instead
+   of teleporting around everywhere
+ - In command-style, may require fancy @dig operations. Might be impossible?
+
+* Denser modern PennMUSH building output / sidefx
+ - New PennMUSH will let you build remotely.
+ - @set me=ATTR_BASE.ID:[dig()], instead of @teleporting around.
+
+* Add partial grid constructions
+ - Let the user define a number of DBrefs for prebuilt rooms and exits.
+
+* Check @quota before building begins.
+ - How do we kill the rest of the building commands after a check!?
+
+* Rewrite README documentation.
+
+FEATURE CREEP:
+* Improve ChatChart
+ - Arrows for which direction the exits go
+ - Unicode 8-way arrays for hockey-stick drawing mode
+ - Graph rigidity for N/S/E/W exits.
+
+From old quickbuild:
+* Add the ability to read daVinci files so we can draw room layouts using
+  graphical tools!
+* Create exit zones/parents as objects, not rooms
