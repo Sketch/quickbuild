@@ -41,7 +41,7 @@ options = {}
 options[:brackets] = true
 options[:brackets_override] = false
 options[:debug] = false
-options[:configfilename] = 'sample.cfg'
+options[:configfilename] = 'qb.cfg'
 
 OptionParser.new do |opts|
 	opts.banner = <<EOT.split(/\n/).join('\n')
@@ -56,8 +56,8 @@ code. It's smart about cardinal directions (aliases and reverse exits),
 
 Usage: quickbuild.rb [options] inputfile > outfile.txt
 EOT
-	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of the default.") do |c|
-		options[:configfilename] << c
+	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of qb.cfg.") do |c|
+		options[:configfilename] = c
 	end
 	opts.on("--no-config-file", "Don't use any configuration file.") do
 		options[:configfilename] = nil
@@ -372,14 +372,22 @@ if options[:debug] then
 end
 
 require 'chatchart' if options[:debug]
+
+commandlist = []
 if options[:configfilename] then
-	# parse config file
+	File.open(options[:configfilename], 'r') {|f|
+		commandlist += process_file(f, syntaxp)
+	}
 end
-commandlist = process_file(ARGF,syntaxp)
+
+commandlist += process_file(ARGF,syntaxp)
+
 if options[:debug] then
 	commandlist.each {|cmd| puts "#{cmd}" }
 end
+
 graph = process_opcodes(commandlist)
+
 if options[:debug] then
 	a = []
 	graph.edges {|edge| puts edge }
