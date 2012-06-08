@@ -132,21 +132,21 @@ syntaxp.push Action.new(/^#.*$/,
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/,
 	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
-syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*"(.*)"\s*"(.*)"/i,
+syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*"(.*)"/i,
 	[:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
-syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*"(.*)"\s*"(.*)"/i,
+syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*(".*"(?:[^->\s]\S*)?)/i,
 	[:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 #syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(.*)$/) +
 #	[:default, lambda {|s,i,e|
 #		# Needs differentiation betwen Database reference numbers and names.
 #		 [:default, [[:ROOM_PARENT, e[:matchdata][1]]]]
 #	}]
-syntaxp.push ActionWIND.new(/^"(.*?)"\s*:\s*("(.*?)"(\s*(<?->)\s*"(.*?)")+)$/,
+syntaxp.push ActionWIND.new(/^(".*?"(?:[^->\s]\S*)?)\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
 		lastroom = e[:matchdata][3]
 		commands = [[:CREATE_ROOM, lastroom]]
-		roomstring.scan(/\s*(<?->)\s*"(.*?)"/).each {|match|
+		roomstring.scan(/\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?)/).each {|match|
 			commands.push([:CREATE_ROOM, match[1]])
 			commands.push([:CREATE_EXIT, exitname, lastroom, match[1]])
 			commands.push([:CREATE_REVERSE_EXIT, exitname, lastroom, match[1]]) if match[0] == "<->"
@@ -154,9 +154,9 @@ syntaxp.push ActionWIND.new(/^"(.*?)"\s*:\s*("(.*?)"(\s*(<?->)\s*"(.*?)")+)$/,
 		}
 		return {:state => s, :action => commands}
 	}])
-syntaxp.push ActionWIND.new(/^IN "(.*)"$/,
+syntaxp.push ActionWIND.new(/^IN\s+(".*"(?:[^->\s]\S*)?)$/,
 	[:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
-syntaxp.push ActionWIND.new(/^ON "(.*)" FROM "(.*)"$/,
+syntaxp.push ActionWIND.new(/^ON\s+(".*"(?:[^->\s]\S*)?)\s+FROM\s+(".*"(?:[^->\s]\S*)?)$/,
 	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][2], :exitname => e[:matchdata][1]}, [[:NOP]] ]}] )
 syntaxp.push Action.new(/^ENDIN$/,
 	[:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
@@ -196,9 +196,10 @@ end
 # This state machine has states that only affect its output, not input
 # processing. This machine is simple enough that a switch will do.
 class RoomNode
-	attr_accessor :id
+	attr_accessor :id, :name
 	def initialize(id)
 		@id = id
+		@name = id.match(/"(.*)"/)[1]
 		@edges = {}
 		@buffer = ''
 		@properties = {}
@@ -221,9 +222,10 @@ class RoomNode
 end
 
 class ExitEdge
-	attr_accessor :id, :from_room, :to_room
-	def initialize(id, from_room, to_room)
+	attr_accessor :id, :name, :from_room, :to_room
+	def initialize(id, name, from_room, to_room)
 		@id = id
+		@name = name
 		@from_room = from_room
 		@to_room = to_room
 		@buffer = ''
@@ -252,8 +254,8 @@ class MuGraph
 		@nodes.store(id, RoomNode.new(id))
 	end
 	def new_exit(id, from_room, to_room, aliases = {})
-		id = aliases[id] || id
-		exitedge = ExitEdge.new(id, from_room, to_room)
+		name = aliases[id] || id.match(/"(.*)"/)[1]
+		exitedge = ExitEdge.new(id, name, from_room, to_room)
 		from_room.add_exit(exitedge)
 		@edgelist.push(exitedge)
 	end
@@ -357,13 +359,13 @@ def process_graph(graph)
 	# They're probably the ZMR/Parent rooms.
 	output = ["think Digging Rooms"]
 	rooms.each {|roomnode|
-		output << "@dig/teleport #{roomnode.id}"
+		output << "@dig/teleport #{roomnode.name}"
 		output << "@set me=ROOM.#{roomnode.id}:%l"
 		output << roomnode.buffer if roomnode.buffer != ''
 	}
 	exits.each {|exitedge|
 		output << "@teleport [v(ROOM.#{exitedge.from_room.id})]"
-		output << "@open #{exitedge.id}=[v(ROOM.#{exitedge.to_room.id})]"
+		output << "@open #{exitedge.name}=[v(ROOM.#{exitedge.to_room.id})]"
 		output << exitedge.buffer if exitedge.buffer != ''
 	}
 	return output

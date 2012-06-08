@@ -33,11 +33,6 @@ Small features:
 
 
 Big features:
-* Add room identifications
- - "s" : "Maze"alpha <-> "Maze"beta
- - Identifiers have no spaces
- - I anticipate this won't actually be difficult. :)
-
 * No-@teleport building.
  - Add a depth-first search to the graph and walk in while building instead
    of teleporting around everywhere
