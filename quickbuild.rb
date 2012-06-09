@@ -222,10 +222,12 @@ end
 class RoomNode
 	attr_accessor :id, :name
 	attr_reader :edges
+	attr_accessor :attr_base
 	def initialize(id)
 		@id = mush_id_format(id)
 		@name = id.match(/"(.*)"/)[1]
 		@edges = {}
+		@attr_base = nil
 		@buffer = ''
 		@properties = {}
 	end
@@ -313,6 +315,7 @@ def process_opcodes(opcode_array, options = {})
 	edgelist = []
 	stateobj = {
 		:location => nil,
+		:attr_base => "ROOM.",
 		:reverse_exits => {},
 		:exit_aliases => {},
 		:graph => MuGraph.new()
@@ -328,13 +331,18 @@ def process_opcodes(opcode_array, options = {})
 			die(stateobj, operand[0])
 		when :WARNING
 			mywarn(stateobj, operand[0])
+		when :ATTR_BASE
+			stateobj[:attr_base] = (operand[0].strip.length == 0 ? "ROOM." : operand[0].strip)
 		when :ALIAS
 			stateobj[:exit_aliases].store(operand[0], operand[1])
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
 			stateobj[:reverse_exits].store(operand[1], operand[0]) if options[:bidirectional_reverse]
 		when :CREATE_ROOM # Do not error/warn if it exists.
-			graph.new_room(operand[0]) if graph[operand[0]] == nil
+			if graph[operand[0]] == nil
+				room = graph.new_room(operand[0])
+				room.attr_base = stateobj[:attr_base]
+			end
 		when :CREATE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
@@ -385,23 +393,38 @@ end
 
 
 def process_graph(graph)
+	output = []
 	rooms = graph.nodes()
 	# TODO: Sort the nodes so non-chzoned and non-parented rooms come first.
 	# They're probably the ZMR/Parent rooms.
-	output = []
 	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
+	attr_bases = (rooms.map {|roomnode| roomnode.attr_base }).sort.uniq
+	attr_bases_made = {}
+	attr_bases.each {|attrname|
+		pieces = attrname.split('`')
+		if pieces.length > 1 then
+			(0...pieces.length).each {|i|
+				attr_base = pieces[0..i].join('`')
+				attr_bases_made.store("&" + attr_base + " me=Placeholder", :true)
+			}
+		end
+	}
+	if attr_bases_made.length > 0 then
+		output << "think Constructing attribute trees (legacy support)"
+		output.concat(attr_bases_made.keys)
+	end
 	output << "think Digging Rooms"
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.name}"
-		output << "@set me=ROOM.#{roomnode.id}:%l"
+		output << "@set me=#{roomnode.attr_base}#{roomnode.id}:%l"
 		output << roomnode.buffer if roomnode.buffer != ''
 	}
 	output << "think Linking Rooms"
 	rooms.each {|roomnode|
 		output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0
 		roomnode.edges.each {|exitedge_id, exitedge|
-			output << "@teleport [v(ROOM.#{exitedge.from_room.id})]"
-			output << "@open #{exitedge.name}=[v(ROOM.#{exitedge.to_room.id})]"
+			output << "@teleport [v(#{exitedge.from_room.attr_base}#{exitedge.from_room.id})]"
+			output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
 			output << exitedge.buffer if exitedge.buffer != ''
 		}
 	}

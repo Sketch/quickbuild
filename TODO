@@ -1,10 +1,5 @@
 Small features:
 
-* Add ATTR_BASE command
- - A simple state swap in process_opcodes(),
-   But ATTR_BASE has to be saved to every node and edge in the grid.
-   Sane default to "ROOM.", only save if ATTR_BASE != "ROOM."
-
 * Add ROOM PARENT command
 * Add ROOM ZONE command
 * Add ROOM FLAGS command
