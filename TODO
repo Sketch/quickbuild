@@ -15,9 +15,6 @@ Small features:
 * Complete "IN" and "ON" parsing
  - Might not be possible due to MPP, in which case I scrap MPP.
 
-* Improve attribute escaping.
- - Spaces aren't valid in attribute names! "ROOM.Emerald Coast" is invalid!
-
 * Add INCLUDE command
  - Handled recursively in process_file() in .each .each. Easy
 

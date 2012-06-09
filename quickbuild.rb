@@ -195,10 +195,35 @@ end
 # Here we read the opcodes from the last section.
 # This state machine has states that only affect its output, not input
 # processing. This machine is simple enough that a switch will do.
+
+# think squish(iter(lnum(1,127),if(cand(not(valid(attrname,x[chr(##)]x)),t(chr(##))),chr(##))))
+# Invalid ASCII characters in attribute names for:
+# PennMUSH : % ( ) : [ \ ] ^ { }
+# TinyMUX  : " % * , : ; [ \ ] { | }
+# RhostMUSH: " * , : ; [ \ ] { | }
+# All combined: " % ( ) * , : ; [ \ ] ^ { | }
+#
+# Don't rely on these functions producing consistent
+# output between versions of quickbuild!
+
+
+BADATTR_ORDS = [34, 37, 40, 41, 42, 44, 58, 59, 91, 92, 93, 94, 123, 124, 125]
+BADATTR_CHARS = (BADATTR_ORDS.map {|x| x.chr(Encoding::ASCII) }) + [' ']
+BADATTR_REPLACE = (BADATTR_ORDS.map {|x| '$' + x.to_s(16) }) + ['_']
+BADATTR_REGEXP = Regexp.union(BADATTR_CHARS)
+BADATTR_HASH = Hash[BADATTR_CHARS.zip(BADATTR_REPLACE)]
+def mush_attr_escape(s)
+	return s.gsub(BADATTR_REGEXP, BADATTR_HASH)
+end
+def mush_id_format(s)
+	return mush_attr_escape(s.sub(/^"/,'').sub(/"$/,''))
+end
+
 class RoomNode
 	attr_accessor :id, :name
+	attr_reader :edges
 	def initialize(id)
-		@id = id
+		@id = mush_id_format(id)
 		@name = id.match(/"(.*)"/)[1]
 		@edges = {}
 		@buffer = ''
@@ -208,7 +233,7 @@ class RoomNode
 		@edges.store(exitedge.id, exitedge)
 	end
 	def lookup_exit(id)
-		return @edges[id]
+		return @edges[mush_id_format(id)]
 	end
 	def to_s()
 		return @id
@@ -224,7 +249,7 @@ end
 class ExitEdge
 	attr_accessor :id, :name, :from_room, :to_room
 	def initialize(id, name, from_room, to_room)
-		@id = id
+		@id = mush_id_format(id)
 		@name = name
 		@from_room = from_room
 		@to_room = to_room
@@ -243,6 +268,7 @@ class ExitEdge
 end
 
 class MuGraph
+	attr_reader :edgelist
 	def initialize()
 		@nodes = {}
 		@edgelist = []
@@ -343,30 +369,41 @@ end
 
 # Section: Graph -> Softcode
 #
-# Warn on: unlinked rooms
+# TODO: Warn on: Rooms with no entrances
 #
-# Print out MUSH code. We do it like this.
+# Print out MUSH code. We do it like this:
 # 1. Dig all of the rooms and store their dbrefs
 # 2. Visit each room, and, while there:
 #    a. Open all of the exits leading from that room, applying exit code
 #    b. Apply any room code
 # We use attributes on the player to store room dbrefs. We call them
 #   #{ATTR_BASE}.#{room.id}. Same for exit dbrefs.
+
+def wrap_text(initial_tab, tab, text, width = 75)
+	return initial_tab + text.scan(/(?:.{1,#{width}})(?:\s+|$)|(?:.{#{width}})/m).join("\n" + tab)
+end
+
+
 def process_graph(graph)
 	rooms = graph.nodes()
-	exits = graph.edges()
 	# TODO: Sort the nodes so non-chzoned and non-parented rooms come first.
 	# They're probably the ZMR/Parent rooms.
-	output = ["think Digging Rooms"]
+	output = []
+	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
+	output << "think Digging Rooms"
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.name}"
 		output << "@set me=ROOM.#{roomnode.id}:%l"
 		output << roomnode.buffer if roomnode.buffer != ''
 	}
-	exits.each {|exitedge|
-		output << "@teleport [v(ROOM.#{exitedge.from_room.id})]"
-		output << "@open #{exitedge.name}=[v(ROOM.#{exitedge.to_room.id})]"
-		output << exitedge.buffer if exitedge.buffer != ''
+	output << "think Linking Rooms"
+	rooms.each {|roomnode|
+		output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0
+		roomnode.edges.each {|exitedge_id, exitedge|
+			output << "@teleport [v(ROOM.#{exitedge.from_room.id})]"
+			output << "@open #{exitedge.name}=[v(ROOM.#{exitedge.to_room.id})]"
+			output << exitedge.buffer if exitedge.buffer != ''
+		}
 	}
 	return output
 end
