@@ -36,6 +36,17 @@ require 'optparse'
 require './statemachine.rb'
 
 
+# Program process:
+# 1) Process program arguments [Section: Parse options]
+# 2) Process input files into opcodes [Section: Input file parser]
+# 3) Process opcodes into a graph [Section: Opcodes -> Graph]
+# 4) Process graph into building commands [Section: Graph -> Softcode]
+#
+# Sections are arranged in order of execution, with their helper functions
+# and relevant classes at the top and primary function at the bottom.
+# [Section: Parse options] is run first, but the other code is kicked
+# off by the [Section: Execution] at the end of the file.
+
 # Section: Parse options
 options = {}
 options[:brackets] = true
@@ -205,8 +216,6 @@ end
 #
 # Don't rely on these functions producing consistent
 # output between versions of quickbuild!
-
-
 BADATTR_ORDS = [34, 37, 40, 41, 42, 44, 58, 59, 91, 92, 93, 94, 123, 124, 125]
 BADATTR_CHARS = (BADATTR_ORDS.map {|x| x.chr(Encoding::ASCII) }) + [' ']
 BADATTR_REPLACE = (BADATTR_ORDS.map {|x| '$' + x.to_s(16) }) + ['_']
@@ -398,6 +407,7 @@ def process_graph(graph)
 	# TODO: Sort the nodes so non-chzoned and non-parented rooms come first.
 	# They're probably the ZMR/Parent rooms.
 	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
+	# TODO: Once ATTR_BASES is set on exits, do graph.edgelist.map here.
 	attr_bases = (rooms.map {|roomnode| roomnode.attr_base }).sort.uniq
 	attr_bases_made = {}
 	attr_bases.each {|attrname|
