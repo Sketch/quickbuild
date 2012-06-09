@@ -31,6 +31,9 @@ Small features:
 * Add '&' command
  - Shorthand for IN "Name" \n &attr here=text \n ENDIN
 
+* Handle tagged exits correctly
+ - Figure out how to get the DBRef # of opened exits.
+ - @listen may be the best option.
 
 Big features:
 * No-@teleport building.
@@ -47,6 +50,8 @@ Big features:
 
 * Check @quota before building begins.
  - How do we kill the rest of the building commands after a check!?
+
+* Add frontends to print out building for MOOs/MUDs
 
 * Rewrite README documentation.
 
