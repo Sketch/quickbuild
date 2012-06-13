@@ -147,11 +147,12 @@ syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*"(.*)"/i,
 	[:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*(".*"(?:[^->\s]\S*)?)/i,
 	[:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
-#syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(.*)$/) +
-#	[:default, lambda {|s,i,e|
-#		# Needs differentiation betwen Database reference numbers and names.
-#		 [:default, [[:ROOM_PARENT, e[:matchdata][1]]]]
-#	}]
+syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, nil, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(#\d+)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :raw]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :id]] ]}] )
 syntaxp.push ActionWIND.new(/^(".*?"(?:[^->\s]\S*)?)\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
@@ -227,16 +228,22 @@ end
 def mush_id_format(s)
 	return mush_attr_escape(s.sub(/^"/,'').sub(/"$/,''))
 end
+def id_to_name(id)
+	return id.match(/"(.*)"/)[1]
+end
 
 class RoomNode
 	attr_accessor :id, :name
 	attr_reader :edges
 	attr_accessor :attr_base
+	attr_accessor :parent, :parent_type
 	def initialize(id)
 		@id = mush_id_format(id)
-		@name = id.match(/"(.*)"/)[1]
+		@name = id_to_name(id)
 		@edges = {}
 		@attr_base = nil
+		@parent = nil
+		@parent_type = nil
 		@buffer = ''
 		@properties = {}
 	end
@@ -280,9 +287,11 @@ end
 
 class MuGraph
 	attr_reader :edgelist
+	attr_accessor :id_parents
 	def initialize()
 		@nodes = {}
 		@edgelist = []
+		@id_parents = {}
 	end
 	def [](x)
 		return @nodes[x]
@@ -291,7 +300,7 @@ class MuGraph
 		@nodes.store(id, RoomNode.new(id))
 	end
 	def new_exit(id, from_room, to_room, aliases = {})
-		name = aliases[id] || id.match(/"(.*)"/)[1]
+		name = aliases[id] || id_to_name(id)
 		exitedge = ExitEdge.new(id, name, from_room, to_room)
 		from_room.add_exit(exitedge)
 		@edgelist.push(exitedge)
@@ -327,6 +336,8 @@ def process_opcodes(opcode_array, options = {})
 		:attr_base => "ROOM.",
 		:reverse_exits => {},
 		:exit_aliases => {},
+		:room_parent => nil, :room_parent_type => nil,
+		:exit_parent => nil, :exit_parent_type => nil,
 		:graph => MuGraph.new()
 	}
 	graph = stateobj[:graph]
@@ -347,11 +358,27 @@ def process_opcodes(opcode_array, options = {})
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
 			stateobj[:reverse_exits].store(operand[1], operand[0]) if options[:bidirectional_reverse]
+		when :ROOM_PARENT
+			if operand[0] && operand[1] == :id then
+				stateobj[:room_parent] = nil # Mimic old behavior
+				room = graph[operand[0]] || # Can return nil
+					{:attr_base => stateobj[:attr_base],
+					:id => mush_id_format(operand[0]),
+					:name => id_to_name(operand[0])}
+				graph.id_parents.store(operand[0], room)
+			end
+			stateobj[:room_parent_type] = operand[1]
+			stateobj[:room_parent] = operand[0]
 		when :CREATE_ROOM # Do not error/warn if it exists.
-			if graph[operand[0]] == nil
+			if graph[operand[0]] == nil then
 				room = graph.new_room(operand[0])
 				room.attr_base = stateobj[:attr_base]
+				if stateobj[:room_parent] && operand[0] != stateobj[:room_parent] then
+					room.parent = stateobj[:room_parent]
+					room.parent_type = stateobj[:room_parent_type]
+				end
 			end
+			graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
 		when :CREATE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
@@ -404,7 +431,12 @@ end
 def process_graph(graph)
 	output = []
 	rooms = graph.nodes()
-	# TODO: Sort the nodes so non-chzoned and non-parented rooms come first.
+	rooms.sort! {|a,b|
+		next -1 if a.parent == nil && b.parent != nil
+		next 1 if a.parent != nil && b.parent == nil
+		next 0
+	}
+	# TODO: Sort the nodes so non-chzoned rooms come first.
 	# They're probably the ZMR/Parent rooms.
 	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
 	# TODO: Once ATTR_BASES is set on exits, do graph.edgelist.map here.
@@ -423,11 +455,26 @@ def process_graph(graph)
 		output << "think Constructing attribute trees (legacy support)"
 		output.concat(attr_bases_made.keys)
 	end
+	unbuilt_parents = graph.id_parents.select {|k,v| v.class == Hash}
+	if unbuilt_parents.length > 0 then
+		output << "think Creating room & exit parents as things"
+		unbuilt_parents.each {|k,v|
+			room = graph.new_room(k)
+			room.attr_base = v[:attr_base]
+			graph.id_parents.store(k, room)
+			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+		}
+	end
 	output << "think Digging Rooms"
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.name}"
 		output << "@set me=#{roomnode.attr_base}#{roomnode.id}:%l"
 		output << roomnode.buffer if roomnode.buffer != ''
+		if roomnode.parent then
+			output << "@parent here=#{roomnode.parent}" if roomnode.parent_type == :raw
+			p = graph[roomnode.parent]
+			output << "@parent here=[v(#{p.attr_base}#{p.id})]" if roomnode.parent_type == :id
+		end
 	}
 	output << "think Linking Rooms"
 	rooms.each {|roomnode|

@@ -1,6 +1,5 @@
 Small features:
 
-* Add ROOM PARENT command
 * Add ROOM ZONE command
 * Add ROOM FLAGS command
 * Add EXIT PARENT command
@@ -56,4 +55,3 @@ FEATURE CREEP:
 From old quickbuild:
 * Add the ability to read daVinci files so we can draw room layouts using
   graphical tools!
-* Create exit zones/parents as objects, not rooms
