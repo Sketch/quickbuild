@@ -153,6 +153,12 @@ syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(#\d+)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :raw]] ]}] )
 syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :id]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, nil, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(#\d+)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :raw]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :id]] ]}] )
 syntaxp.push ActionWIND.new(/^(".*?"(?:[^->\s]\S*)?)\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
@@ -266,9 +272,12 @@ end
 
 class ExitEdge
 	attr_accessor :id, :name, :from_room, :to_room
+	attr_accessor :parent, :parent_type
 	def initialize(id, name, from_room, to_room)
 		@id = mush_id_format(id)
 		@name = name
+		@parent = nil
+		@parent_type = nil
 		@from_room = from_room
 		@to_room = to_room
 		@buffer = ''
@@ -304,6 +313,7 @@ class MuGraph
 		exitedge = ExitEdge.new(id, name, from_room, to_room)
 		from_room.add_exit(exitedge)
 		@edgelist.push(exitedge)
+		return exitedge
 	end
 	def nodes()
 		if block_given? then
@@ -369,6 +379,21 @@ def process_opcodes(opcode_array, options = {})
 			end
 			stateobj[:room_parent_type] = operand[1]
 			stateobj[:room_parent] = operand[0]
+
+		when :EXIT_PARENT
+			if operand[0] && operand[1] == :id then
+				# Make a room (or thing) if one doesn't exist.
+				# Exits typically do not make good exit @parents!
+				stateobj[:exit_parent] = nil # Mimic old behavior
+				room = graph[operand[0]] || # Can return nil
+					{:attr_base => stateobj[:attr_base],
+					:id => mush_id_format(operand[0]),
+					:name => id_to_name(operand[0])}
+				graph.id_parents.store(operand[0], room)
+			end
+			stateobj[:exit_parent_type] = operand[1]
+			stateobj[:exit_parent] = operand[0]
+
 		when :CREATE_ROOM # Do not error/warn if it exists.
 			if graph[operand[0]] == nil then
 				room = graph.new_room(operand[0])
@@ -383,14 +408,22 @@ def process_opcodes(opcode_array, options = {})
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
-			graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases])
+			exitedge = graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases])
+			if stateobj[:exit_parent] then
+				exitedge.parent = stateobj[:exit_parent]
+				exitedge.parent_type = stateobj[:exit_parent_type]
+			end
 		when :CREATE_REVERSE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			reverse = stateobj[:reverse_exits][operand[0]]
 			die(stateobj, "No reverse exit for #{operand[0]}") if ! reverse
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
-			graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases])
+			exitedge = graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases])
+			if stateobj[:exit_parent] then
+				exitedge.parent = stateobj[:exit_parent]
+				exitedge.parent_type = stateobj[:exit_parent_type]
+			end
 		when :BUFFER_ROOM
 			room = graph[operand[0]]
 			if room == nil then
@@ -483,6 +516,11 @@ def process_graph(graph)
 			output << "@teleport [v(#{exitedge.from_room.attr_base}#{exitedge.from_room.id})]"
 			output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
 			output << exitedge.buffer if exitedge.buffer != ''
+			if exitedge.parent then
+				output << "@parent #{exitedge.name}=#{exitedge.parent}" if exitedge.parent_type == :raw
+				p = graph[exitedge.parent] # Exit parents are not exits
+				output << "@parent #{exitedge.name}=[v(#{p.attr_base}#{p.id})]" if exitedge.parent_type == :id
+			end
 		}
 	}
 	return output
