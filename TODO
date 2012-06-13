@@ -26,6 +26,16 @@ Small features:
 * Handle tagged exits correctly
  - Figure out how to get the DBRef # of opened exits.
  - @listen may be the best option.
+ - Making an exit's @id ROOM_ID~EXIT_ID may be helpful.
+
+* Make MuGraph handle same-named rooms in different ATTR_BASEs.
+ - This may just be a "builder beware" scenario.
+ - Lookup rooms based on [nil,name], iff duplicates then on [attr_base,name]
+
+* Check all config file locations that old quickbuild did
+
+* Check filename arguments instead of STDIN for convenience.
+ - Print error if both filenames and STDIN are used
 
 Big features:
 * No-@teleport building.
@@ -39,6 +49,8 @@ Big features:
 
 * Add partial grid constructions
  - Let the user define a number of DBrefs for prebuilt rooms and exits.
+ - Probably by :BUILT_ROOM <id> <dbref> and :BUILT_EXIT <id> <dbref> opcodes.
+ - Maybe also :BUILT_THING <id> <dbref> for room/exit parents.
 
 * Check @quota before building begins.
  - How do we kill the rest of the building commands after a check!?
