@@ -207,7 +207,7 @@ syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*
 syntaxp.push ActionWIND.new(/^IN\s+(".*"(?:[^->\s]\S*)?)$/,
 	[:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
-syntaxp.push ActionWIND.new(/^ON\s+(".*"(?:[^->\s]\S*)?)\s+FROM\s+(".*"(?:[^->\s]\S*)?)$/,
+syntaxp.push ActionWIND.new(/^ON\s+(".*")\s+FROM\s+(".*"(?:[^->\s]\S*)?)$/,
 	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][2], :exitname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
 syntaxp.push Action.new(/^ENDIN$/,
@@ -426,7 +426,6 @@ def process_opcodes(opcode_array, options = {})
 
 		when :ROOM_PARENT
 			if operand[0] && operand[1] == :id then
-				stateobj[:room_parent] = nil # Mimic old behavior
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
@@ -438,7 +437,6 @@ def process_opcodes(opcode_array, options = {})
 
 		when :ROOM_ZONE
 			if operand[0] && operand[1] == :id then
-				stateobj[:room_zone] = nil # Mimic old behavior
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
@@ -455,7 +453,6 @@ def process_opcodes(opcode_array, options = {})
 			if operand[0] && operand[1] == :id then
 				# Make a room (or thing) if one doesn't exist.
 				# Exits typically do not make good exit @parents!
-				stateobj[:exit_parent] = nil # Mimic old behavior
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
@@ -469,7 +466,6 @@ def process_opcodes(opcode_array, options = {})
 			if operand[0] && operand[1] == :id then
 				# Make a room (or thing) if one doesn't exist.
 				# Exits typically do not make good exit @parents!
-				stateobj[:exit_zone] = nil # Mimic old behavior
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
