@@ -185,6 +185,11 @@ syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(#\d+)\s*$/,
 syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :id]] ]}] )
 
+syntaxp.push ActionWIND.new(/^EXIT FLAGS:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT FLAGS:\s*(.*)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, e[:matchdata][1]]] ]}] )
+
 syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
@@ -310,6 +315,7 @@ class ExitEdge
 	attr_accessor :id, :name, :from_room, :to_room
 	attr_accessor :parent, :parent_type
 	attr_accessor :zone, :zone_type
+	attr_accessor :flags
 	def initialize(id, name, from_room, to_room)
 		@id = mush_id_format(id)
 		@name = name
@@ -317,6 +323,7 @@ class ExitEdge
 		@parent_type = nil
 		@zone = nil
 		@zone_type = nil
+		@flags = nil
 		@from_room = from_room
 		@to_room = to_room
 		@buffer = ''
@@ -391,6 +398,7 @@ def process_opcodes(opcode_array, options = {})
 		:room_flags => nil,
 		:exit_parent => nil, :exit_parent_type => nil,
 		:exit_zone => nil,   :exit_zone_type => nil,
+		:exit_flags => nil,
 		:graph => MuGraph.new()
 	}
 
@@ -471,6 +479,9 @@ def process_opcodes(opcode_array, options = {})
 			stateobj[:exit_zone_type] = operand[1]
 			stateobj[:exit_zone] = operand[0]
 
+		when :EXIT_FLAGS
+			stateobj[:exit_flags] = operand[0]
+
 		when :CREATE_ROOM # Do not error/warn if it exists.
 			if graph[operand[0]] == nil then
 				room = graph.new_room(operand[0])
@@ -501,6 +512,7 @@ def process_opcodes(opcode_array, options = {})
 				exitedge.zone = stateobj[:exit_zone]
 				exitedge.zone_type = stateobj[:exit_zone_type]
 			end
+			exitedge.flags = stateobj[:exit_flags]
 
 		when :CREATE_REVERSE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
@@ -517,6 +529,7 @@ def process_opcodes(opcode_array, options = {})
 				exitedge.zone = stateobj[:exit_zone]
 				exitedge.zone_type = stateobj[:exit_zone_type]
 			end
+			exitedge.flags = stateobj[:exit_flags]
 
 		when :BUFFER_ROOM
 			room = graph[operand[0]]
@@ -644,6 +657,7 @@ def process_graph(graph)
 				p = graph[exitedge.zone] # Exit zones are not exits
 				output << "@chzone #{exitedge.name}=[v(#{p.attr_base}#{p.id})]" if exitedge.zone_type == :id
 			end
+			output << "@set #{exitedge.name}=#{exitedge.flags}" if exitedge.flags
 		}
 	}
 

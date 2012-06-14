@@ -1,7 +1,5 @@
 Small features:
 
-* Add EXIT FLAGS command
-
 * Complete "IN" and "ON" parsing
  - Might not be possible due to MPP, in which case I scrap MPP.
 
