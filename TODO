@@ -1,7 +1,6 @@
 Small features:
 
 * Add ROOM FLAGS command
-* Add EXIT ZONE command
 * Add EXIT FLAGS command
 
 * Complete "IN" and "ON" parsing
