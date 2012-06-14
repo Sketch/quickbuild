@@ -137,40 +137,49 @@ closebracket = lambda {|s,input,e|
 syntaxp.push Action.new(/^>/,
 	[:in, closebracket],
 	[:on, closebracket])
+
 syntaxp.push Action.new(/^#.*$/,
 	[:default, lambda {|s| [s, [[:NOP]]]}],
 	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
+
 syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/,
 	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
+
 syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*"(.*)"/i,
 	[:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
+
 syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*(".*"(?:[^->\s]\S*)?)/i,
 	[:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
+
 syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, nil, nil]] ]}] )
 syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(#\d+)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :raw]] ]}] )
 syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :id]] ]}] )
+
 syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, nil, nil]] ]}] )
 syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(#\d+)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :raw]] ]}] )
 syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :id]] ]}] )
+
 syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, nil, nil]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(#\d+)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :raw]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :id]] ]}] )
+
 syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, nil, nil]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(#\d+)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :raw]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :id]] ]}] )
+
 syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
@@ -184,18 +193,23 @@ syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*
 		}
 		return {:state => s, :action => commands}
 	}])
+
 syntaxp.push ActionWIND.new(/^IN\s+(".*"(?:[^->\s]\S*)?)$/,
 	[:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
+
 syntaxp.push ActionWIND.new(/^ON\s+(".*"(?:[^->\s]\S*)?)\s+FROM\s+(".*"(?:[^->\s]\S*)?)$/,
 	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][2], :exitname => e[:matchdata][1]}, [[:NOP]] ]}] )
+
 syntaxp.push Action.new(/^ENDIN$/,
 	[:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
 	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDIN outside of IN-block."]] ]}],
 	[:on,      lambda {|s,i,e| [:default, [[:WARNING, "ENDIN inside ON-block."]] ]}] )
+
 syntaxp.push Action.new(/^ENDON$/,
 	[:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
 	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
 	[:in,      lambda {|s,i,e| [:default, [[:WARNING, "ENDON inside IN-block."]] ]}] )
+
 syntaxp.push Action.new(/^.+$/,
 	[:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command."]] ]}],
 	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
@@ -382,13 +396,17 @@ def process_opcodes(opcode_array, options = {})
 			die(stateobj, operand[0])
 		when :WARNING
 			mywarn(stateobj, operand[0])
+
 		when :ATTR_BASE
 			stateobj[:attr_base] = (operand[0].strip.length == 0 ? "ROOM." : operand[0].strip)
+
 		when :ALIAS
 			stateobj[:exit_aliases].store(operand[0], operand[1])
+
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
 			stateobj[:reverse_exits].store(operand[1], operand[0]) if options[:bidirectional_reverse]
+
 		when :ROOM_PARENT
 			if operand[0] && operand[1] == :id then
 				stateobj[:room_parent] = nil # Mimic old behavior
@@ -456,6 +474,7 @@ def process_opcodes(opcode_array, options = {})
 			end
 			graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
 			graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
+
 		when :CREATE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
@@ -469,6 +488,7 @@ def process_opcodes(opcode_array, options = {})
 				exitedge.zone = stateobj[:exit_zone]
 				exitedge.zone_type = stateobj[:exit_zone_type]
 			end
+
 		when :CREATE_REVERSE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			reverse = stateobj[:reverse_exits][operand[0]]
@@ -484,6 +504,7 @@ def process_opcodes(opcode_array, options = {})
 				exitedge.zone = stateobj[:exit_zone]
 				exitedge.zone_type = stateobj[:exit_zone_type]
 			end
+
 		when :BUFFER_ROOM
 			room = graph[operand[0]]
 			if room == nil then
@@ -491,6 +512,7 @@ def process_opcodes(opcode_array, options = {})
 				room = graph.new_room(operand[0])
 			end
 			room.append_buffer(operand[1])
+
 		when :BUFFER_EXIT
 			# This should warn and create an unlinked exit, per quickbuild v1
 			room = graph[operand[0]]
@@ -499,6 +521,7 @@ def process_opcodes(opcode_array, options = {})
 			die(stateobj, "Exit #{operand[1]} doesn't exist") if exitedge == nil
 			exitedge.append_buffer(operand[2])
 		end
+
 	}
 	return graph
 end
@@ -533,6 +556,7 @@ def process_graph(graph)
 	}
 
 	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
+
 	# TODO: Once ATTR_BASES is set on exits, do graph.edgelist.map here.
 	attr_bases = (rooms.map {|roomnode| roomnode.attr_base }).sort.uniq
 	attr_bases_made = {}
@@ -549,6 +573,7 @@ def process_graph(graph)
 		output << "think Constructing attribute trees (legacy support)"
 		output.concat(attr_bases_made.keys)
 	end
+
 	unbuilt_parents = graph.id_parents.select {|k,v| v.class == Hash}
 	if unbuilt_parents.length > 0 then
 		output << "think Creating room & exit parents as things"
@@ -559,6 +584,7 @@ def process_graph(graph)
 			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
 		}
 	end
+
 	unbuilt_zones = graph.id_zones.select {|k,v| v.class == Hash}
 	if unbuilt_zones.length > 0 then
 		output << "think Creating room & exit zones as things"
@@ -586,6 +612,7 @@ def process_graph(graph)
 			output << "@chzone here=[v(#{z.attr_base}#{z.id})]" if roomnode.zone_type == :id
 		end
 	}
+
 	output << "think Linking Rooms"
 	rooms.each {|roomnode|
 		output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0
@@ -605,6 +632,7 @@ def process_graph(graph)
 			end
 		}
 	}
+
 	return output
 end
 
@@ -642,5 +670,6 @@ if options[:debug] then
 	ChatChart::SmartLayout[ g ]
 	puts g.to_canvas(ChatChart::L1Line)
 end
+
 softcode = process_graph(graph)
 puts(softcode)
