@@ -499,6 +499,7 @@ def process_opcodes(opcode_array, options = {})
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
+			die(stateobj, "There is already an exit #{operand[0]} in room #{operand[1]}") if from_room.lookup_exit(operand[0])
 			exitedge = graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases])
 			if stateobj[:exit_parent] then
 				exitedge.parent = stateobj[:exit_parent]
