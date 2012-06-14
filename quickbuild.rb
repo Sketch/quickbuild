@@ -153,6 +153,12 @@ syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(#\d+)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :raw]] ]}] )
 syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :id]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, nil, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(#\d+)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :raw]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :id]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, nil, nil]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(#\d+)\s*$/,
@@ -243,6 +249,7 @@ class RoomNode
 	attr_reader :edges
 	attr_accessor :attr_base
 	attr_accessor :parent, :parent_type
+	attr_accessor :zone, :zone_type
 	def initialize(id)
 		@id = mush_id_format(id)
 		@name = id_to_name(id)
@@ -250,6 +257,8 @@ class RoomNode
 		@attr_base = nil
 		@parent = nil
 		@parent_type = nil
+		@zone = nil
+		@zone_type = nil
 		@buffer = ''
 		@properties = {}
 	end
@@ -296,11 +305,12 @@ end
 
 class MuGraph
 	attr_reader :edgelist
-	attr_accessor :id_parents
+	attr_accessor :id_parents, :id_zones
 	def initialize()
 		@nodes = {}
 		@edgelist = []
 		@id_parents = {}
+		@id_zones = {}
 	end
 	def [](x)
 		return @nodes[x]
@@ -347,6 +357,7 @@ def process_opcodes(opcode_array, options = {})
 		:reverse_exits => {},
 		:exit_aliases => {},
 		:room_parent => nil, :room_parent_type => nil,
+		:room_zone => nil,   :room_zone_type => nil,
 		:exit_parent => nil, :exit_parent_type => nil,
 		:graph => MuGraph.new()
 	}
@@ -380,6 +391,18 @@ def process_opcodes(opcode_array, options = {})
 			stateobj[:room_parent_type] = operand[1]
 			stateobj[:room_parent] = operand[0]
 
+		when :ROOM_ZONE
+			if operand[0] && operand[1] == :id then
+				stateobj[:room_zone] = nil # Mimic old behavior
+				room = graph[operand[0]] || # Can return nil
+					{:attr_base => stateobj[:attr_base],
+					:id => mush_id_format(operand[0]),
+					:name => id_to_name(operand[0])}
+				graph.id_zones.store(operand[0], room)
+			end
+			stateobj[:room_zone_type] = operand[1]
+			stateobj[:room_zone] = operand[0]
+
 		when :EXIT_PARENT
 			if operand[0] && operand[1] == :id then
 				# Make a room (or thing) if one doesn't exist.
@@ -402,8 +425,13 @@ def process_opcodes(opcode_array, options = {})
 					room.parent = stateobj[:room_parent]
 					room.parent_type = stateobj[:room_parent_type]
 				end
+				if stateobj[:room_zone] && operand[0] != stateobj[:room_zone] then
+					room.zone = stateobj[:room_zone]
+					room.zone_type = stateobj[:room_zone_type]
+				end
 			end
 			graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
+			graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
 		when :CREATE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
@@ -465,12 +493,13 @@ def process_graph(graph)
 	output = []
 	rooms = graph.nodes()
 	rooms.sort! {|a,b|
+		next -1 if a.zone == nil && b.zone != nil
+		next  1 if a.zone != nil && b.zone == nil
 		next -1 if a.parent == nil && b.parent != nil
-		next 1 if a.parent != nil && b.parent == nil
+		next  1 if a.parent != nil && b.parent == nil
 		next 0
 	}
-	# TODO: Sort the nodes so non-chzoned rooms come first.
-	# They're probably the ZMR/Parent rooms.
+
 	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
 	# TODO: Once ATTR_BASES is set on exits, do graph.edgelist.map here.
 	attr_bases = (rooms.map {|roomnode| roomnode.attr_base }).sort.uniq
@@ -498,6 +527,17 @@ def process_graph(graph)
 			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
 		}
 	end
+	unbuilt_zones = graph.id_zones.select {|k,v| v.class == Hash}
+	if unbuilt_zones.length > 0 then
+		output << "think Creating room & exit zones as things"
+		unbuilt_zones.each {|k,v|
+			room = graph.new_room(k)
+			room.attr_base = v[:attr_base]
+			graph.id_zones.store(k, room)
+			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+		}
+	end
+
 	output << "think Digging Rooms"
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.name}"
@@ -507,6 +547,11 @@ def process_graph(graph)
 			output << "@parent here=#{roomnode.parent}" if roomnode.parent_type == :raw
 			p = graph[roomnode.parent]
 			output << "@parent here=[v(#{p.attr_base}#{p.id})]" if roomnode.parent_type == :id
+		end
+		if roomnode.zone then
+			output << "@chzone here=#{roomnode.zone}" if roomnode.zone_type == :raw
+			z = graph[roomnode.zone]
+			output << "@chzone here=[v(#{z.attr_base}#{z.id})]" if roomnode.zone_type == :id
 		end
 	}
 	output << "think Linking Rooms"
