@@ -147,11 +147,30 @@ syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*"(.*)"/i,
 	[:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*(".*"(?:[^->\s]\S*)?)/i,
 	[:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
-#syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(.*)$/) +
-#	[:default, lambda {|s,i,e|
-#		# Needs differentiation betwen Database reference numbers and names.
-#		 [:default, [[:ROOM_PARENT, e[:matchdata][1]]]]
-#	}]
+syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, nil, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(#\d+)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :raw]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :id]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, nil, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(#\d+)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :raw]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :id]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, nil, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(#\d+)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :raw]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :id]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, nil, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(#\d+)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :raw]] ]}] )
+syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :id]] ]}] )
 syntaxp.push ActionWIND.new(/^(".*?"(?:[^->\s]\S*)?)\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
@@ -227,16 +246,25 @@ end
 def mush_id_format(s)
 	return mush_attr_escape(s.sub(/^"/,'').sub(/"$/,''))
 end
+def id_to_name(id)
+	return id.match(/"(.*)"/)[1]
+end
 
 class RoomNode
 	attr_accessor :id, :name
 	attr_reader :edges
 	attr_accessor :attr_base
+	attr_accessor :parent, :parent_type
+	attr_accessor :zone, :zone_type
 	def initialize(id)
 		@id = mush_id_format(id)
-		@name = id.match(/"(.*)"/)[1]
+		@name = id_to_name(id)
 		@edges = {}
 		@attr_base = nil
+		@parent = nil
+		@parent_type = nil
+		@zone = nil
+		@zone_type = nil
 		@buffer = ''
 		@properties = {}
 	end
@@ -259,9 +287,15 @@ end
 
 class ExitEdge
 	attr_accessor :id, :name, :from_room, :to_room
+	attr_accessor :parent, :parent_type
+	attr_accessor :zone, :zone_type
 	def initialize(id, name, from_room, to_room)
 		@id = mush_id_format(id)
 		@name = name
+		@parent = nil
+		@parent_type = nil
+		@zone = nil
+		@zone_type = nil
 		@from_room = from_room
 		@to_room = to_room
 		@buffer = ''
@@ -280,9 +314,12 @@ end
 
 class MuGraph
 	attr_reader :edgelist
+	attr_accessor :id_parents, :id_zones
 	def initialize()
 		@nodes = {}
 		@edgelist = []
+		@id_parents = {}
+		@id_zones = {}
 	end
 	def [](x)
 		return @nodes[x]
@@ -291,10 +328,11 @@ class MuGraph
 		@nodes.store(id, RoomNode.new(id))
 	end
 	def new_exit(id, from_room, to_room, aliases = {})
-		name = aliases[id] || id.match(/"(.*)"/)[1]
+		name = aliases[id] || id_to_name(id)
 		exitedge = ExitEdge.new(id, name, from_room, to_room)
 		from_room.add_exit(exitedge)
 		@edgelist.push(exitedge)
+		return exitedge
 	end
 	def nodes()
 		if block_given? then
@@ -327,6 +365,10 @@ def process_opcodes(opcode_array, options = {})
 		:attr_base => "ROOM.",
 		:reverse_exits => {},
 		:exit_aliases => {},
+		:room_parent => nil, :room_parent_type => nil,
+		:room_zone => nil,   :room_zone_type => nil,
+		:exit_parent => nil, :exit_parent_type => nil,
+		:exit_zone => nil,   :exit_zone_type => nil,
 		:graph => MuGraph.new()
 	}
 	graph = stateobj[:graph]
@@ -347,23 +389,101 @@ def process_opcodes(opcode_array, options = {})
 		when :REVERSE
 			stateobj[:reverse_exits].store(operand[0], operand[1])
 			stateobj[:reverse_exits].store(operand[1], operand[0]) if options[:bidirectional_reverse]
+		when :ROOM_PARENT
+			if operand[0] && operand[1] == :id then
+				stateobj[:room_parent] = nil # Mimic old behavior
+				room = graph[operand[0]] || # Can return nil
+					{:attr_base => stateobj[:attr_base],
+					:id => mush_id_format(operand[0]),
+					:name => id_to_name(operand[0])}
+				graph.id_parents.store(operand[0], room)
+			end
+			stateobj[:room_parent_type] = operand[1]
+			stateobj[:room_parent] = operand[0]
+
+		when :ROOM_ZONE
+			if operand[0] && operand[1] == :id then
+				stateobj[:room_zone] = nil # Mimic old behavior
+				room = graph[operand[0]] || # Can return nil
+					{:attr_base => stateobj[:attr_base],
+					:id => mush_id_format(operand[0]),
+					:name => id_to_name(operand[0])}
+				graph.id_zones.store(operand[0], room)
+			end
+			stateobj[:room_zone_type] = operand[1]
+			stateobj[:room_zone] = operand[0]
+
+		when :EXIT_PARENT
+			if operand[0] && operand[1] == :id then
+				# Make a room (or thing) if one doesn't exist.
+				# Exits typically do not make good exit @parents!
+				stateobj[:exit_parent] = nil # Mimic old behavior
+				room = graph[operand[0]] || # Can return nil
+					{:attr_base => stateobj[:attr_base],
+					:id => mush_id_format(operand[0]),
+					:name => id_to_name(operand[0])}
+				graph.id_parents.store(operand[0], room)
+			end
+			stateobj[:exit_parent_type] = operand[1]
+			stateobj[:exit_parent] = operand[0]
+
+		when :EXIT_ZONE
+			if operand[0] && operand[1] == :id then
+				# Make a room (or thing) if one doesn't exist.
+				# Exits typically do not make good exit @parents!
+				stateobj[:exit_zone] = nil # Mimic old behavior
+				room = graph[operand[0]] || # Can return nil
+					{:attr_base => stateobj[:attr_base],
+					:id => mush_id_format(operand[0]),
+					:name => id_to_name(operand[0])}
+				graph.id_zones.store(operand[0], room)
+			end
+			stateobj[:exit_zone_type] = operand[1]
+			stateobj[:exit_zone] = operand[0]
+
 		when :CREATE_ROOM # Do not error/warn if it exists.
-			if graph[operand[0]] == nil
+			if graph[operand[0]] == nil then
 				room = graph.new_room(operand[0])
 				room.attr_base = stateobj[:attr_base]
+				if stateobj[:room_parent] && operand[0] != stateobj[:room_parent] then
+					room.parent = stateobj[:room_parent]
+					room.parent_type = stateobj[:room_parent_type]
+				end
+				if stateobj[:room_zone] && operand[0] != stateobj[:room_zone] then
+					room.zone = stateobj[:room_zone]
+					room.zone_type = stateobj[:room_zone_type]
+				end
 			end
+			graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
+			graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
 		when :CREATE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
-			graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases])
+			exitedge = graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases])
+			if stateobj[:exit_parent] then
+				exitedge.parent = stateobj[:exit_parent]
+				exitedge.parent_type = stateobj[:exit_parent_type]
+			end
+			if stateobj[:exit_zone] then
+				exitedge.zone = stateobj[:exit_zone]
+				exitedge.zone_type = stateobj[:exit_zone_type]
+			end
 		when :CREATE_REVERSE_EXIT
 			from_room, to_room = graph[operand[1]], graph[operand[2]]
 			reverse = stateobj[:reverse_exits][operand[0]]
 			die(stateobj, "No reverse exit for #{operand[0]}") if ! reverse
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
-			graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases])
+			exitedge = graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases])
+			if stateobj[:exit_parent] then
+				exitedge.parent = stateobj[:exit_parent]
+				exitedge.parent_type = stateobj[:exit_parent_type]
+			end
+			if stateobj[:exit_zone] then
+				exitedge.zone = stateobj[:exit_zone]
+				exitedge.zone_type = stateobj[:exit_zone_type]
+			end
 		when :BUFFER_ROOM
 			room = graph[operand[0]]
 			if room == nil then
@@ -404,8 +524,14 @@ end
 def process_graph(graph)
 	output = []
 	rooms = graph.nodes()
-	# TODO: Sort the nodes so non-chzoned and non-parented rooms come first.
-	# They're probably the ZMR/Parent rooms.
+	rooms.sort! {|a,b|
+		next -1 if a.zone == nil && b.zone != nil
+		next  1 if a.zone != nil && b.zone == nil
+		next -1 if a.parent == nil && b.parent != nil
+		next  1 if a.parent != nil && b.parent == nil
+		next 0
+	}
+
 	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
 	# TODO: Once ATTR_BASES is set on exits, do graph.edgelist.map here.
 	attr_bases = (rooms.map {|roomnode| roomnode.attr_base }).sort.uniq
@@ -423,11 +549,42 @@ def process_graph(graph)
 		output << "think Constructing attribute trees (legacy support)"
 		output.concat(attr_bases_made.keys)
 	end
+	unbuilt_parents = graph.id_parents.select {|k,v| v.class == Hash}
+	if unbuilt_parents.length > 0 then
+		output << "think Creating room & exit parents as things"
+		unbuilt_parents.each {|k,v|
+			room = graph.new_room(k)
+			room.attr_base = v[:attr_base]
+			graph.id_parents.store(k, room)
+			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+		}
+	end
+	unbuilt_zones = graph.id_zones.select {|k,v| v.class == Hash}
+	if unbuilt_zones.length > 0 then
+		output << "think Creating room & exit zones as things"
+		unbuilt_zones.each {|k,v|
+			room = graph.new_room(k)
+			room.attr_base = v[:attr_base]
+			graph.id_zones.store(k, room)
+			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+		}
+	end
+
 	output << "think Digging Rooms"
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.name}"
 		output << "@set me=#{roomnode.attr_base}#{roomnode.id}:%l"
 		output << roomnode.buffer if roomnode.buffer != ''
+		if roomnode.parent then
+			output << "@parent here=#{roomnode.parent}" if roomnode.parent_type == :raw
+			p = graph[roomnode.parent]
+			output << "@parent here=[v(#{p.attr_base}#{p.id})]" if roomnode.parent_type == :id
+		end
+		if roomnode.zone then
+			output << "@chzone here=#{roomnode.zone}" if roomnode.zone_type == :raw
+			z = graph[roomnode.zone]
+			output << "@chzone here=[v(#{z.attr_base}#{z.id})]" if roomnode.zone_type == :id
+		end
 	}
 	output << "think Linking Rooms"
 	rooms.each {|roomnode|
@@ -436,6 +593,16 @@ def process_graph(graph)
 			output << "@teleport [v(#{exitedge.from_room.attr_base}#{exitedge.from_room.id})]"
 			output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
 			output << exitedge.buffer if exitedge.buffer != ''
+			if exitedge.parent then
+				output << "@parent #{exitedge.name}=#{exitedge.parent}" if exitedge.parent_type == :raw
+				p = graph[exitedge.parent] # Exit parents are not exits
+				output << "@parent #{exitedge.name}=[v(#{p.attr_base}#{p.id})]" if exitedge.parent_type == :id
+			end
+			if exitedge.zone then
+				output << "@chzone #{exitedge.name}=#{exitedge.zone}" if exitedge.zone_type == :raw
+				p = graph[exitedge.zone] # Exit zones are not exits
+				output << "@chzone #{exitedge.name}=[v(#{p.attr_base}#{p.id})]" if exitedge.zone_type == :id
+			end
 		}
 	}
 	return output
