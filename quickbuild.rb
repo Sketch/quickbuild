@@ -166,6 +166,11 @@ syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(#\d+)\s*$/,
 syntaxp.push ActionWIND.new(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :id]] ]}] )
 
+syntaxp.push ActionWIND.new(/^ROOM FLAGS:\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, nil]] ]}] )
+syntaxp.push ActionWIND.new(/^ROOM FLAGS:\s*(.*)\s*$/,
+	[:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, e[:matchdata][1]]] ]}] )
+
 syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, nil, nil]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT PARENT:\s*(#\d+)\s*$/,
@@ -270,6 +275,7 @@ class RoomNode
 	attr_accessor :attr_base
 	attr_accessor :parent, :parent_type
 	attr_accessor :zone, :zone_type
+	attr_accessor :flags
 	def initialize(id)
 		@id = mush_id_format(id)
 		@name = id_to_name(id)
@@ -279,6 +285,7 @@ class RoomNode
 		@parent_type = nil
 		@zone = nil
 		@zone_type = nil
+		@flags = nil
 		@buffer = ''
 		@properties = {}
 	end
@@ -381,10 +388,12 @@ def process_opcodes(opcode_array, options = {})
 		:exit_aliases => {},
 		:room_parent => nil, :room_parent_type => nil,
 		:room_zone => nil,   :room_zone_type => nil,
+		:room_flags => nil,
 		:exit_parent => nil, :exit_parent_type => nil,
 		:exit_zone => nil,   :exit_zone_type => nil,
 		:graph => MuGraph.new()
 	}
+
 	graph = stateobj[:graph]
 	opcode_array.each {|h|
 		stateobj[:location] = h[:location]
@@ -431,6 +440,9 @@ def process_opcodes(opcode_array, options = {})
 			stateobj[:room_zone_type] = operand[1]
 			stateobj[:room_zone] = operand[0]
 
+		when :ROOM_FLAGS
+			stateobj[:room_flags] = operand[0]
+
 		when :EXIT_PARENT
 			if operand[0] && operand[1] == :id then
 				# Make a room (or thing) if one doesn't exist.
@@ -471,6 +483,7 @@ def process_opcodes(opcode_array, options = {})
 					room.zone = stateobj[:room_zone]
 					room.zone_type = stateobj[:room_zone_type]
 				end
+				room.flags = stateobj[:room_flags]
 			end
 			graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
 			graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
@@ -611,6 +624,7 @@ def process_graph(graph)
 			z = graph[roomnode.zone]
 			output << "@chzone here=[v(#{z.attr_base}#{z.id})]" if roomnode.zone_type == :id
 		end
+		output << "@set here=#{roomnode.flags}" if roomnode.flags
 	}
 
 	output << "think Linking Rooms"
