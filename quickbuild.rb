@@ -171,7 +171,7 @@ syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(#\d+)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :raw]] ]}] )
 syntaxp.push ActionWIND.new(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :id]] ]}] )
-syntaxp.push ActionWIND.new(/^(".*?"(?:[^->\s]\S*)?)\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
+syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
 		lastroom = e[:matchdata][3]
