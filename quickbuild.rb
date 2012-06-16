@@ -79,7 +79,7 @@ EOT
 	opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
 		options[:bidirectional_reverse] = false
 	end
-	opts.on("-d", "--debug", "Show debug output (requires chatchart gem)") do
+	opts.on("-d", "--debug", "Show debug output") do
 		options[:debug] = true
 	end
 	opts.on_tail("-h", "--help", "Show this message") do
@@ -690,7 +690,12 @@ if options[:debug] then
 	puts "#{ARGV}"
 end
 
-require 'chatchart' if options[:debug]
+CHATCHART = nil
+begin
+	require 'chatchart' if options[:debug]
+	CHATCHART = true
+rescue LoadError
+end
 
 commandlist = []
 if options[:configfilename] then
@@ -707,7 +712,7 @@ end
 
 graph = process_opcodes(commandlist, options)
 
-if options[:debug] then
+if options[:debug] && CHATCHART then
 	a = []
 	graph.edges {|edge| puts edge }
 	graph.edges {|edge|
