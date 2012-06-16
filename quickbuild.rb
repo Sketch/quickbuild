@@ -55,7 +55,7 @@ options[:debug] = false
 options[:configfilename] = 'qb.cfg'
 
 OptionParser.new do |opts|
-	opts.banner = <<EOT.split(/\n/).join('\n')
+	opts.banner = <<EOT.split(/\n/).join("\n")
 Quickbuild v#{VERSION}    - offline MUSH building tool
 Released under the same terms as PennMUSH
 
@@ -552,7 +552,6 @@ def process_opcodes(opcode_array, options = {})
 			room.append_buffer(operand[1])
 
 		when :BUFFER_EXIT
-			# This should warn and create an unlinked exit, per quickbuild v1
 			room = graph[operand[0]]
 			die(stateobj, "Room #{operand[0]} doesn't exist") if room == nil
 			exitedge = room.lookup_exit(operand[1])
@@ -690,11 +689,11 @@ if options[:debug] then
 	puts "#{ARGV}"
 end
 
-CHATCHART = nil
 begin
 	require 'chatchart' if options[:debug]
 	CHATCHART = true
 rescue LoadError
+	CHATCHART = nil
 end
 
 commandlist = []
