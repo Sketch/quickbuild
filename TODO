@@ -9,9 +9,6 @@ Small features:
 * Add '&' command
  - Shorthand for IN "Name" \n &attr here=text \n ENDIN
 
-* Check filename arguments instead of STDIN for convenience.
- - Print error if both filenames and STDIN are used
-
 * Improve exit bracket handling: (aliasify)
  - If told to, auto-bracket exit names
  - If given, possible, and no <b>rackets, bracket based on first given alias.
@@ -32,6 +29,10 @@ Small features:
 
 * Complete "IN" and "ON" parsing
  - Might not be possible due to MPP, in which case I scrap MPP.
+
+* Add warnings:
+ - Rewriting REVERSE
+ - Rewriting ALIAS
 
 Big features:
 * No-@teleport building.
