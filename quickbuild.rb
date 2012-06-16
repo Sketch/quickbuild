@@ -52,7 +52,7 @@ options = {}
 options[:brackets] = true
 options[:bidirectional_reverse] = true
 options[:debug] = false
-options[:configfilename] = 'qb.cfg'
+options[:configfilename] = ['.qbcfg', 'qb.cfg', ENV['HOME'] + '.qbcfg', ENV['HOME'] + 'qb.cfg']
 
 OptionParser.new do |opts|
 	opts.banner = <<EOT.split(/\n/).join("\n")
@@ -67,7 +67,7 @@ code. It's smart about cardinal directions (aliases and reverse exits),
 
 Usage: quickbuild.rb [options] inputfile > outfile.txt
 EOT
-	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of qb.cfg.") do |c|
+	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of defaults.") do |c|
 		options[:configfilename] = c
 	end
 	opts.on("--no-config-file", "Don't use any configuration file.") do
@@ -696,11 +696,27 @@ rescue LoadError
 	CHATCHART = nil
 end
 
+
 commandlist = []
+
 if options[:configfilename] then
-	File.open(options[:configfilename], 'r') {|f|
-		commandlist += process_file(f, syntaxp)
-	}
+	case options[:configfilename]
+	when String
+		File.open(options[:configfilename], 'r') {|f|
+			commandlist += process_file(f, syntaxp)
+		}
+	when Array
+		possible = options[:configfilename].select {|f|
+			File.exist?(f) && ! File.directory?(f)
+		}
+		if possible != [] then
+			File.open(possible[0], 'r') {|f|
+				commandlist += process_file(f, syntaxp)
+			}
+		end
+	when NilClass
+		# Do nothing
+	end
 end
 
 commandlist += process_file(ARGF,syntaxp)

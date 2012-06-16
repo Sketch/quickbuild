@@ -9,8 +9,6 @@ Small features:
 * Add '&' command
  - Shorthand for IN "Name" \n &attr here=text \n ENDIN
 
-* Check all config file locations that old quickbuild did
-
 * Check filename arguments instead of STDIN for convenience.
  - Print error if both filenames and STDIN are used
 
