@@ -620,6 +620,9 @@ def process_graph(graph)
 			room.attr_base = v[:attr_base]
 			graph.id_parents.store(k, room)
 			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
+			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
+			output << "@link [v(#{room.attr_base}#{room.id})]=me"
 		}
 	end
 
@@ -631,6 +634,9 @@ def process_graph(graph)
 			room.attr_base = v[:attr_base]
 			graph.id_zones.store(k, room)
 			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
+			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
+			output << "@link [v(#{room.attr_base}#{room.id})]=me"
 		}
 	end
 
