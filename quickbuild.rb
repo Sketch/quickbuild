@@ -50,7 +50,6 @@ require './statemachine.rb'
 # Section: Parse options
 options = {}
 options[:brackets] = true
-options[:brackets_override] = false
 options[:bidirectional_reverse] = true
 options[:debug] = false
 options[:configfilename] = 'qb.cfg'
@@ -76,7 +75,6 @@ EOT
 	end
 	opts.on("-b", "--nobrackets", "Don't use <B>racket style of exit naming.") do |b|
 		options[:brackets] = !b
-		options[:brackets_override] = true
 	end
 	opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
 		options[:bidirectional_reverse] = false
@@ -274,6 +272,21 @@ def id_to_name(id)
 	return id.match(/"(.*)"/)[1]
 end
 
+def aliasify(given_name, alias_list = [])
+	name, semicolon, given_aliases = given_name.partition(';')
+	aliased_word, aliased_name = nil, name
+	autobracket = false
+	if /<\S+>/ !~ name && autobracket then # Not pre-bracketed
+		aliased_word = name.split(' ').reduce('') {|m,w| m.concat(w[0])}
+		aliased_name = (name.split(' ').map {|word| word.sub(/^./, '<\0>')}).join(' ')
+	elsif /<\S+>/ =~ name then # Pre-bracketed exit name
+		aliased_word = name.scan(/<(\S+)>/).join('')
+		aliased_name = name
+	end
+	fullname = ([aliased_name, aliased_word, given_aliases].select {|x| x && x != ''}).join(';')
+	return [fullname, [aliased_word] + given_aliases.split(';')]
+end
+
 class RoomNode
 	attr_accessor :id, :name
 	attr_reader :edges
@@ -355,8 +368,10 @@ class MuGraph
 	def new_room(id)
 		@nodes.store(id, RoomNode.new(id))
 	end
-	def new_exit(id, from_room, to_room, aliases = {})
-		name = aliases[id] || id_to_name(id)
+	def new_exit(id, from_room, to_room, aliases = {}, autoalias = true)
+		name = aliases[id]
+		name ||= aliasify(id_to_name(id))[0] if autoalias
+		name ||= id_to_name(id)
 		exitedge = ExitEdge.new(id, name, from_room, to_room)
 		from_room.add_exit(exitedge)
 		@edgelist.push(exitedge)
@@ -500,7 +515,7 @@ def process_opcodes(opcode_array, options = {})
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
 			die(stateobj, "There is already an exit #{operand[0]} in room #{operand[1]}") if from_room.lookup_exit(operand[0])
-			exitedge = graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases])
+			exitedge = graph.new_exit(operand[0], from_room, to_room, stateobj[:exit_aliases], options[:brackets])
 			if stateobj[:exit_parent] then
 				exitedge.parent = stateobj[:exit_parent]
 				exitedge.parent_type = stateobj[:exit_parent_type]
@@ -517,7 +532,7 @@ def process_opcodes(opcode_array, options = {})
 			die(stateobj, "No reverse exit for #{operand[0]}") if ! reverse
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
-			exitedge = graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases])
+			exitedge = graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases], options[:brackets])
 			if stateobj[:exit_parent] then
 				exitedge.parent = stateobj[:exit_parent]
 				exitedge.parent_type = stateobj[:exit_parent_type]
@@ -641,20 +656,21 @@ def process_graph(graph)
 	rooms.each {|roomnode|
 		output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0
 		roomnode.edges.each {|exitedge_id, exitedge|
+			shortname = exitedge.name.partition(';')[0]
 			output << "@teleport [v(#{exitedge.from_room.attr_base}#{exitedge.from_room.id})]"
 			output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
 			output << exitedge.buffer if exitedge.buffer != ''
 			if exitedge.parent then
-				output << "@parent #{exitedge.name}=#{exitedge.parent}" if exitedge.parent_type == :raw
+				output << "@parent #{shortname}=#{exitedge.parent}" if exitedge.parent_type == :raw
 				p = graph[exitedge.parent] # Exit parents are not exits
-				output << "@parent #{exitedge.name}=[v(#{p.attr_base}#{p.id})]" if exitedge.parent_type == :id
+				output << "@parent #{shortname}=[v(#{p.attr_base}#{p.id})]" if exitedge.parent_type == :id
 			end
 			if exitedge.zone then
-				output << "@chzone #{exitedge.name}=#{exitedge.zone}" if exitedge.zone_type == :raw
+				output << "@chzone #{shortname}=#{exitedge.zone}" if exitedge.zone_type == :raw
 				p = graph[exitedge.zone] # Exit zones are not exits
-				output << "@chzone #{exitedge.name}=[v(#{p.attr_base}#{p.id})]" if exitedge.zone_type == :id
+				output << "@chzone #{shortname}=[v(#{p.attr_base}#{p.id})]" if exitedge.zone_type == :id
 			end
-			output << "@set #{exitedge.name}=#{exitedge.flags}" if exitedge.flags
+			output << "@set #{shortname}=#{exitedge.flags}" if exitedge.flags
 		}
 	}
 

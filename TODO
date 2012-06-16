@@ -1,20 +1,23 @@
 Small features:
 
-* Complete "IN" and "ON" parsing
- - Might not be possible due to MPP, in which case I scrap MPP.
-
 * Add INCLUDE command
  - Handled recursively in process_file() in .each .each. Easy
-
-* Add STARTING-IN command
- - STARTING-IN specifies that the room the user is standing in is X
- - (also considering a STARTING-ON, but you can't be -IN- an exit.)
 
 * Add DESC(RIBE) command
  - Shorthand for IN "Name" \n @describe here=TEXT \n ENDIN
 
 * Add '&' command
  - Shorthand for IN "Name" \n &attr here=text \n ENDIN
+
+* Check all config file locations that old quickbuild did
+
+* Check filename arguments instead of STDIN for convenience.
+ - Print error if both filenames and STDIN are used
+
+* Improve exit bracket handling: (aliasify)
+ - If told to, auto-bracket exit names
+ - If given, possible, and no <b>rackets, bracket based on first given alias.
+ - Make sure there are no duplicate exit aliases in a room
 
 * Allow exit name tagging, and handle tagged exits correctly
  - Figure out how to get the DBRef # of opened exits.
@@ -25,10 +28,12 @@ Small features:
  - This may just be a "builder beware" scenario.
  - Lookup rooms based on [nil,name], iff duplicates then on [attr_base,name]
 
-* Check all config file locations that old quickbuild did
+* Add STARTING-IN command
+ - STARTING-IN specifies that the room the user is standing in is X
+ - (also considering a STARTING-ON, but you can't be -IN- an exit.)
 
-* Check filename arguments instead of STDIN for convenience.
- - Print error if both filenames and STDIN are used
+* Complete "IN" and "ON" parsing
+ - Might not be possible due to MPP, in which case I scrap MPP.
 
 Big features:
 * No-@teleport building.
