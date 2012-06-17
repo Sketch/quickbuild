@@ -136,17 +136,22 @@ Anywhere you can use a room name, you can also use a name tag.
 
 ### Custom Code
 
+The DESCRIBE command can be used to add descriptions to rooms:
+
+    DESCRIBE "Grasslands"=The grassy plains stretch on and on.
+
+If you need to do more than just @describe a room,
+you can add custom code that will be executed in a given room like this:
+
+    IN "Room Name"
+    ...MUSH code in mpp format here...
+    ENDIN
+
 You can add custom code that will be executed in a given room like this:
 
-	IN "Room Name"
-	...MUSH code in mpp format here...
-	ENDIN
-
-You can add custom code that will be executed in a given room like this:
-
-	ON "Exit Name" FROM "Source Room Name
-	...MUSH code in mpp format here...
-	ENDON
+    ON "Exit Name" FROM "Source Room Name
+    ...MUSH code in mpp format here...
+    ENDON
 
 mpp format is the format defined by Josh Bell's mpp (MUSH preprocessor)
 program. It  works like this:
@@ -215,7 +220,6 @@ ROOM PARENT line in your default configuration file.
 
 Here is an example that illustrates most of the features:
 
-
 ### Input
 
     ROOM ZONE: #123
@@ -225,9 +229,7 @@ Here is an example that illustrates most of the features:
     "e": "Town Square" <-> "Main Street"
     EXIT FLAGS: opaque
     "<M>anhole;manhole;m;down;dow;do;d": "Main Street" -> "Sewer"
-    IN "Town Square"
-    @desc here=This is town square
-    ENDIN
+    DESCRIBE "Town Square"=This is town square.
     ON "s" FROM "City Gates"
     @lock s = ok/1
     ENDON
@@ -235,40 +237,45 @@ Here is an example that illustrates most of the features:
 ### Resulting Output
 
     think Digging Rooms
-    @wait 0 = { @dig/tel Sewer; &ROOM.Sewer me = %l }
-    @wait 0 = { @dig/tel City Gates; &ROOM.City_Gates me = %l }
-    @wait 0 = { @dig/tel Main Street; &ROOM.Main_Street me = %l }
-    @wait 0 = { @dig/tel Town Square; &ROOM.Town_Square me = %l }
+    @dig/teleport Town Square
+    @set me=ROOM.Town_Square:%l
+    @chzone here=#123
+    @set here=transparent
+    @describe here=This is town square.
+    @dig/teleport City Gates
+    @set me=ROOM.City_Gates:%l
+    @chzone here=#123
+    @set here=transparent
+    @dig/teleport Main Street
+    @set me=ROOM.Main_Street:%l
+    @chzone here=#123
+    @set here=transparent
+    @dig/teleport Sewer
+    @set me=ROOM.Sewer:%l
+    @chzone here=#123
+    @set here=transparent
     think Linking Rooms
-    @tel [v(ROOM.Sewer)]
-    @chzone here = #123
-    @set here = transparent
-    @tel [v(ROOM.City_Gates)]
-    @open South <S>;south;sout;sou;so;s = [v(ROOM.Town Square)]
-    @parent South <S> = #444
+    @teleport [v(ROOM.Town_Square)]
+    @open North <N>;north;nort;nor;no;n=[v(ROOM.City_Gates)]
+    @parent North <N>=#444
+    @open East <E>;east;eas;ea;e=[v(ROOM.Main_Street)]
+    @parent East <E>=#444
+    @teleport [v(ROOM.City_Gates)]
+    @open South <S>;south;sout;sou;so;s=[v(ROOM.Town_Square)]
+    @parent South <S>=#444
     @lock s = ok/1
-    @chzone here = #123
-    @set here = transparent
-    @tel [v(ROOM.Main_Street)]
-    @open West <W>;west;wes;we;w = [v(ROOM.Town Square)]
-    @parent West <W> = #444
-    @open <M>anhole;manhole;m;down;dow;do;d = [v(ROOM.Sewer)]
-    @parent <M>anhole = #444
-    @set <M>anhole = opaque
-    @chzone here = #123
-    @set here = transparent
-    @tel [v(ROOM.Town_Square)]
-    @open East <E>;east;eas;ea;e = [v(ROOM.Main Street)]
-    @parent East <E> = #444
-    @open North <N>;north;nort;nor;no;n = [v(ROOM.City Gates)]
-    @parent North <N> = #444
-    @chzone here = #123
-    @set here = transparent
-    @desc here=This is town square
+    @teleport [v(ROOM.Main_Street)]
+    @open West <W>;west;wes;we;w=[v(ROOM.Town_Square)]
+    @parent West <W>=#444
+    @open <M>anhole;M;manhole;m;down;dow;do;d=[v(ROOM.Sewer)]
+    @parent <M>anhole=#444
+    @set <M>anhole=opaque
+    think WARNING: Creating room with no exits: Sewer
+    @teleport [v(ROOM.Sewer)]
 
 
-In this silly example, an input of 324 characters resulted in an output of
-1027 characters, so you saved considerable typing time.
+In this silly example, an input of 302 characters resulted in an output of
+1163 characters, so you saved considerable typing time.
 
 * * *
 # RESTRICTIONS

@@ -1,11 +1,5 @@
 Small features:
 
-* Add INCLUDE command
- - Handled recursively in process_file() in .each .each. Easy
-
-* Add DESC(RIBE) command
- - Shorthand for IN "Name" \n @describe here=TEXT \n ENDIN
-
 * Add '&' command
  - Shorthand for IN "Name" \n &attr here=text \n ENDIN
 
@@ -54,7 +48,10 @@ Big features:
 
 * Add frontends to print out building for MOOs/MUDs
 
-* Rewrite README documentation.
+* Add macroing system
+ - This probably isn't necessary if you have a good editor.
+ - INCLUDE command, handled recursively in process_file. Easy, but worthless?
+ - MACRO "name" and CALL "name" commands, with $vars (like $current_room)?
 
 FEATURE CREEP:
 * Improve ChatChart

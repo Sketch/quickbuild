@@ -21,7 +21,7 @@
 # EXIT FLAGS: <flag list>
 # EXIT ZONE: <dbref> or "Room Name" (no, that's not an error)
 # EXIT PARENT: <dbref> or "Room Name" (no that's not an error)
-# DESC "Room Name" = Description
+# DESC "Room Name"=Description
 # IN "Room Name"
 # ... MUSH code in mpp format ...
 # ENDIN
@@ -218,13 +218,14 @@ syntaxp.push Action.new(/^ENDON\s*$/,
 	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
 	[:in,      lambda {|s,i,e| [:default, [[:WARNING, "ENDON inside IN-block."]] ]}] )
 
+syntaxp.push ActionWIND.new(/^DESC(?:RIBE)?\s+(".*"(?:[^->\s]\S*)?)\s*=\s*(.*)$/,
+	[:default, lambda {|s,i,e| [s, [[:BUFFER_ROOM, e[:matchdata][1], "\n@describe here=" + e[:matchdata][2]]] ]}] )
+
 syntaxp.push Action.new(/^.+$/,
 	[:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command."]] ]}],
 	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
-#syntaxp.push ActionWIND.new(/^DESC(RIBE)? "(.*?)"
-#syntaxp.push Action.new(/^&(\S+)\s+"(.*?)"\s*=(.*)$/) +
 
 def process_file(fileobj, parser)
 	extras = {:linenumber => 0}
