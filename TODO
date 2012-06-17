@@ -10,9 +10,10 @@ Small features:
  - Shorthand for IN "Name" \n &attr here=text \n ENDIN
 
 * Improve exit bracket handling: (aliasify)
- - If told to, auto-bracket exit names
- - If given, possible, and no <b>rackets, bracket based on first given alias.
- - Make sure there are no duplicate exit aliases in a room
+ - Make sure there are no duplicate exit aliases in a room.
+ - Add --stripbrackets option to mimic old --nobrackets behavior.
+ - Add --autobracket option to add brackets to exits that don't have them.
+   If given, possible, and no <b>rackets, bracket based on first given alias.
 
 * Allow exit name tagging, and handle tagged exits correctly
  - Figure out how to get the DBRef # of opened exits.
@@ -33,6 +34,9 @@ Small features:
 * Add warnings:
  - Rewriting REVERSE
  - Rewriting ALIAS
+
+* Make a way to parent and add code to room parents
+ - CREATE THING "Name" command might work.
 
 Big features:
 * No-@teleport building.
