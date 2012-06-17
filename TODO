@@ -31,10 +31,6 @@ Small features:
 * Complete "IN" and "ON" parsing
  - Might not be possible due to MPP, in which case I scrap MPP.
 
-* Add warnings:
- - Rewriting REVERSE
- - Rewriting ALIAS
-
 * Make a way to parent and add code to room parents
  - CREATE THING "Name" command might work.
 

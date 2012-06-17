@@ -433,11 +433,19 @@ def process_opcodes(opcode_array, options = {})
 			stateobj[:attr_base] = (operand[0].strip.length == 0 ? "ROOM." : operand[0].strip)
 
 		when :ALIAS
+			old = stateobj[:exit_aliases].delete(operand[0])
+			mywarn(stateobj, "Replacing alias definition #{operand[0]}->\"#{old}\" with #{operand[0]}->\"#{operand[1]}\".") if old
 			stateobj[:exit_aliases].store(operand[0], operand[1])
 
 		when :REVERSE
+			old = stateobj[:reverse_exits].delete(operand[0])
+			mywarn(stateobj, "Replacing reverse definition #{operand[0]}->#{old} with #{operand[0]}->#{operand[1]}") if old
 			stateobj[:reverse_exits].store(operand[0], operand[1])
-			stateobj[:reverse_exits].store(operand[1], operand[0]) if options[:bidirectional_reverse]
+			if options[:bidirectional_reverse] then
+				old = stateobj[:reverse_exits].delete(operand[1])
+				mywarn(stateobj, "Replacing reverse definition #{operand[1]}->#{old} with #{operand[1]}->#{operand[0]}") if old
+				stateobj[:reverse_exits].store(operand[1], operand[0])
+			end
 
 		when :ROOM_PARENT
 			if operand[0] && operand[1] == :id then
