@@ -601,6 +601,10 @@ def process_graph(graph)
 		next 0
 	}
 
+	now = Time.now
+	timestring = ([now.year, now.month, now.day].map {|i| i.to_s.rjust(2,'0')} ).join('-')
+	output << "@@ File generated on " + timestring + " with Quickbuild version " + VERSION
+
 	output << wrap_text("@@ ", "@@ ", (graph.edgelist.map {|exitedge| "#{exitedge.from_room.id}-->#{exitedge.to_room.id}" }).join(' '))
 
 	# TODO: Once ATTR_BASES is set on exits, do graph.edgelist.map here.
