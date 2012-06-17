@@ -651,7 +651,6 @@ def process_graph(graph)
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.name}"
 		output << "@set me=#{roomnode.attr_base}#{roomnode.id}:%l"
-		output << roomnode.buffer if roomnode.buffer != ''
 		if roomnode.parent then
 			output << "@parent here=#{roomnode.parent}" if roomnode.parent_type == :raw
 			p = graph[roomnode.parent]
@@ -663,6 +662,7 @@ def process_graph(graph)
 			output << "@chzone here=[v(#{z.attr_base}#{z.id})]" if roomnode.zone_type == :id
 		end
 		output << "@set here=#{roomnode.flags}" if roomnode.flags
+		output << roomnode.buffer if roomnode.buffer != ''
 	}
 
 	output << "think Linking Rooms"
@@ -672,7 +672,6 @@ def process_graph(graph)
 		roomnode.edges.each {|exitedge_id, exitedge|
 			shortname = exitedge.name.partition(';')[0]
 			output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
-			output << exitedge.buffer if exitedge.buffer != ''
 			if exitedge.parent then
 				output << "@parent #{shortname}=#{exitedge.parent}" if exitedge.parent_type == :raw
 				p = graph[exitedge.parent] # Exit parents are not exits
@@ -684,6 +683,7 @@ def process_graph(graph)
 				output << "@chzone #{shortname}=[v(#{p.attr_base}#{p.id})]" if exitedge.zone_type == :id
 			end
 			output << "@set #{shortname}=#{exitedge.flags}" if exitedge.flags
+			output << exitedge.buffer if exitedge.buffer != ''
 		}
 	}
 
