@@ -144,10 +144,10 @@ syntaxp.push Action.new(/^#.*$/,
 syntaxp.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/,
 	[:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
 
-syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*"(.*)"/i,
+syntaxp.push ActionWIND.new(/^ALIAS\s*:?\s*(".*")\s*"(.*)"\s*$/i,
 	[:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 
-syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*(".*"(?:[^->\s]\S*)?)\s*(".*"(?:[^->\s]\S*)?)/i,
+syntaxp.push ActionWIND.new(/^REVERSE\s*:?\s*(".*")\s*(".*")\s*$/i,
 	[:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 
 syntaxp.push ActionWIND.new(/^ROOM PARENT:\s*$/,
@@ -188,7 +188,7 @@ syntaxp.push ActionWIND.new(/^EXIT FLAGS:\s*$/,
 syntaxp.push ActionWIND.new(/^EXIT FLAGS:\s*(.*)\s*$/,
 	[:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, e[:matchdata][1]]] ]}] )
 
-syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)$/,
+syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)\s*$/,
 	[:default, lambda {|s,i,e|
 		exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
 		lastroom = e[:matchdata][3]
@@ -202,18 +202,18 @@ syntaxp.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*
 		return {:state => s, :action => commands}
 	}])
 
-syntaxp.push ActionWIND.new(/^IN\s+(".*"(?:[^->\s]\S*)?)$/,
+syntaxp.push ActionWIND.new(/^IN\s+(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
-syntaxp.push ActionWIND.new(/^ON\s+(".*")\s+FROM\s+(".*"(?:[^->\s]\S*)?)$/,
+syntaxp.push ActionWIND.new(/^ON\s+(".*")\s+FROM\s+(".*"(?:[^->\s]\S*)?)\s*$/,
 	[:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][2], :exitname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
-syntaxp.push Action.new(/^ENDIN$/,
+syntaxp.push Action.new(/^ENDIN\s*$/,
 	[:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
 	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDIN outside of IN-block."]] ]}],
 	[:on,      lambda {|s,i,e| [:default, [[:WARNING, "ENDIN inside ON-block."]] ]}] )
 
-syntaxp.push Action.new(/^ENDON$/,
+syntaxp.push Action.new(/^ENDON\s*$/,
 	[:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
 	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
 	[:in,      lambda {|s,i,e| [:default, [[:WARNING, "ENDON inside IN-block."]] ]}] )
