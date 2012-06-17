@@ -132,6 +132,7 @@ You can "tag" room names by putting a single word after the ending quote:
 Both rooms will be built with the name "Maze", but stored on the builder
 character as different attributes. Name tags are useful when you're building
 things like mazes, or just want to confuse the Players for some reason. :)
+Anywhere you can use a room name, you can also use a name tag.
 
 ### Custom Code
 
@@ -161,7 +162,7 @@ program. It  works like this:
 4. (not implemented by *quickbuild*) Lines starting with '\*'
   (in the first column) are treated
   as continuations and are converted from plain ASCII to
-  "MUSH-ready" ASCII, i.e. spaces -> %b, \[ -&gt; \[, etc. %r
+  "MUSH-ready" ASCII, i.e. spaces -&gt; %b, \[ -&gt; \[, etc. %r
   characters are prepended to any subsequent &gt; lines.
 
 5. In any other line, each tab is converted to a space.
@@ -227,7 +228,7 @@ Here is an example that illustrates most of the features:
     IN "Town Square"
     @desc here=This is town square
     ENDIN
-    ON "s" FROM "City Gat"
+    ON "s" FROM "City Gates"
     @lock s = ok/1
     ENDON
 
@@ -271,8 +272,6 @@ In this silly example, an input of 324 characters resulted in an output of
 
 * * *
 # RESTRICTIONS
-
-Rooms must have unique names.
 
 Exits originating from the same source room must have unique names.
 

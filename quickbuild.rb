@@ -4,8 +4,8 @@
 # Improved, Ruby version by Ryan Dowell, Sketch@M*U*S*H, 2012
 # Released under the same license terms as PennMUSH
 #
-# Usage: quickbuild < infile > output.txt
-# Then upload output.txt to a MUSH.
+# Usage: quickbuild infile > output.txt
+# Then upload the code in output.txt to a MUSH.
 #
 # Quickbuild file syntax:
 #
@@ -700,7 +700,7 @@ end
 commandlist = []
 
 if options[:configfilename] then
-	case options[:configfilename]
+	case options[:configfilename] # Notice we don't call ".class()"!
 	when String
 		File.open(options[:configfilename], 'r') {|f|
 			commandlist += process_file(f, syntaxp)
