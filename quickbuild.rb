@@ -21,7 +21,7 @@
 # EXIT FLAGS: <flag list>
 # EXIT ZONE: <dbref> or "Room Name" (no, that's not an error)
 # EXIT PARENT: <dbref> or "Room Name" (no that's not an error)
-# DESC "Room Name"=Description
+# DESC "Room Name" =Description
 # IN "Room Name"
 # ... MUSH code in mpp format ...
 # ENDIN
@@ -218,7 +218,7 @@ syntaxp.push Action.new(/^ENDON\s*$/,
 	[:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
 	[:in,      lambda {|s,i,e| [:default, [[:WARNING, "ENDON inside IN-block."]] ]}] )
 
-syntaxp.push ActionWIND.new(/^DESC(?:RIBE)?\s+(".*"(?:[^->\s]\S*)?)\s*=\s*(.*)$/,
+syntaxp.push ActionWIND.new(/^DESC(?:RIBE)?\s+(".*?"(?:[^=->\s]\S*)?)\s*=\s*(.*)$/,
 	[:default, lambda {|s,i,e| [s, [[:BUFFER_ROOM, e[:matchdata][1], "\n@describe here=" + e[:matchdata][2]]] ]}] )
 
 syntaxp.push Action.new(/^.+$/,
@@ -554,10 +554,7 @@ def process_opcodes(opcode_array, options = {})
 
 		when :BUFFER_ROOM
 			room = graph[operand[0]]
-			if room == nil then
-				mywarn(stateobj, "Room #{operand[0]} doesn't exist")
-				room = graph.new_room(operand[0])
-			end
+			die(stateobj, "Room #{operand[0]} doesn't exist") if ! room
 			room.append_buffer(operand[1])
 
 		when :BUFFER_EXIT
