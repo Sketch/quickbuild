@@ -1,6 +1,6 @@
 # NAME
 
-*Quickbuild* - MUSH offline building tool
+*Quickbuild* - offline MUSH building tool
 
 # SYNOPSIS
 
@@ -10,16 +10,18 @@
 
 *Quickbuild* is a Ruby script that lets you quickly lay out a MUSH area
 (a set of rooms connected by exits, optionally zoned and/or parented)
-in an easy-to-use format. It converts this file into uploadable MUSH code.
-It's smart about cardinal directions (aliases and reverse exits),
-&lt;b&gt;racket style, and a few other things.
-It accepts a list of filenames as arguments, and
-produces uploadable MUSH code on stdout.
+in an easy-to-use format in a text file.  It's smart about cardinal
+directions (aliases and reverse exits), &lt;b&gt;racket style exit-naming,
+and a few other things.
+
+*Quickbuild* is a very simple Ruby script: It has no dependencies, and can be
+run on any modern Ruby without installing gems or libraries.  It accepts a
+list of filenames as arguments, and produces uploadable MUSH code on stdout.
 
 * * *
 ## Quickbuild File Format
 
-An input file for *quickbuild* can include the following:
+An input file for *Quickbuild* can include the following:
 
 ### Comments
 
@@ -52,6 +54,17 @@ like this:
 This will open a north exit from source to destination and a south exit
 back from destination to source.
 
+### Name tags
+
+You can "tag" room names by putting a single word after the ending quote:
+
+    "Exit name" : "Room Name"tag1 <-> "Room Name"tag2
+
+Both rooms will be built with the name "Room Name", but stored on the builder
+character as different attributes. Name tags are useful when you're building
+things like mazes, or just want to confuse the Players for some reason. :)
+Anywhere you can use a room name, you can also use a name tag.
+
 ### Dbref storage
 
 When rooms are built, their dbrefs are stored on the building player
@@ -64,7 +77,7 @@ You can change the "ROOM." prefix with the line
 
     ATTR BASE: <new prefix>
 
-Quickbuild recognizes attribute tree prefixes (e.g. "QB\`ROOM\`") and
+*Quickbuild* recognizes attribute tree prefixes (e.g. "QB\`ROOM\`") and
 creates placeholder attributes for the branches.
 
 ### Zones and Parents
@@ -79,15 +92,15 @@ is first used in the input. You may use additional ROOM ZONE: commands
 to change the active room zone.
 
 If you provide a room name instead of a dbref, the room will be
-created by the script *quickbuild* generates.
+created by the script *Quickbuild* generates.
 
 You can set default exit zones, room parents, and exit parents
 with EXIT ZONE:, ROOM PARENT:, and EXIT PARENT: commands. Note that
 if you're not providing dbrefs, you should be providing a room
-name, even if you're setting exit zone/parent. That is, *quickbuild*
+name, even if you're setting exit zone/parent. That is, *Quickbuild*
 will generate a room as the exit parent (which doesn't hurt).
 
-Note that you cannot parent a room parent with *quickbuild*. It's trivial
+Note that you cannot parent a room parent with *Quickbuild*. It's trivial
 to do so manually, however.
 
 ### Flags
@@ -123,22 +136,11 @@ alias, rather than the full exit name. The reverse command makes BOTH
 of its arguments the reverse of the other, unless the --noreverse
 option is specified.
 
-### Name tags
-
-You can "tag" room names by putting a single word after the ending quote:
-
-    "n" : "Maze"central <-> "Maze"north
-
-Both rooms will be built with the name "Maze", but stored on the builder
-character as different attributes. Name tags are useful when you're building
-things like mazes, or just want to confuse the Players for some reason. :)
-Anywhere you can use a room name, you can also use a name tag.
-
 ### Custom Code
 
 The DESCRIBE command can be used to add descriptions to rooms:
 
-    DESCRIBE "Grasslands"=The grassy plains stretch on and on.
+    DESCRIBE "Room name" =The room description goes here, without quotes.
 
 If you need to do more than just @describe a room,
 you can add custom code that will be executed in a given room like this:
@@ -164,7 +166,7 @@ program. It  works like this:
 3. Leading whitespace on a line is otherwise stripped,
   and indicates the line is a continuation of the previous line
 
-4. (not implemented by *quickbuild*) Lines starting with '\*'
+4. (not implemented by *Quickbuild*) Lines starting with '\*'
   (in the first column) are treated
   as continuations and are converted from plain ASCII to
   "MUSH-ready" ASCII, i.e. spaces -&gt; %b, \[ -&gt; \[, etc. %r
@@ -181,13 +183,13 @@ Prints a usage summary
 
 ### --nobrackets
 
-By default, *quickbuild* assumes that you like the &lt;B&gt;racket style
+By default, *Quickbuild* assumes that you like the &lt;B&gt;racket style
 of exit naming, where the abbreviation in the brackets is the short
 name for the exit.
 
 ### --noreverse
 
-By default, *quickbuild* assumes that the line REVERSE "a" "b" should
+By default, *Quickbuild* assumes that the line REVERSE "a" "b" should
 define "b" as the reverse exit of "a", AND "a" as the reverse exit of "b".
 Use this option to make REVERSE one-way, and only define
 the second argument as the reverse exit of the first argument.
@@ -203,7 +205,7 @@ Don't use any configuration file.
 * * *
 # CONFIGURATION FILE
 
-By default, *quickbuild* loads a configuration file that defines a few default
+By default, *Quickbuild* loads a configuration file that defines a few default
 aliases for exits (e.g., "n" for "<N>orth;north;nort;nor;no;n") and reverse
 exits (e.g. "n" and "s"). It searches for this file in the following order:
 
@@ -211,7 +213,7 @@ exits (e.g. "n" and "s"). It searches for this file in the following order:
 2. .qbcfg or qb.cfg in the current directory
 3. .qbcfg or qb.cfg in the user's home directory
 
-Configuration files are actually just quickbuild files themselves. You can
+Configuration files are actually just *Quickbuild* files themselves. You can
 use the REVERSE and ALIAS line in your building scripts, or even have a
 ROOM PARENT line in your default configuration file.
 
@@ -290,5 +292,5 @@ version is available here:
     http://download.pennmush.org/Accessories/
 
 The modern Ruby version is authored by Ryan Dowell, and distributed under the
-same license as PennMUSH. The latest version of *quickbuild* is available here:
+same license as PennMUSH. The latest version of *Quickbuild* is available here:
     https://github.com/Sketch/quickbuild

@@ -63,7 +63,7 @@ Quickbuild is a ruby script that lets you quickly lay out a MUSH area
 (a set of rooms connected by exits, optionally zoned and/or parented)
 in an easy-to-use format. It converts this file into uploadble MUSH
 code. It's smart about cardinal directions (aliases and reverse exits),
-<b>racket style, and a few other things.
+<b>racket style exit naming, and a few other things.
 
 Usage: quickbuild.rb [options] inputfile > outfile.txt
 EOT

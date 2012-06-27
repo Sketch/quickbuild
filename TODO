@@ -1,18 +1,13 @@
 Small features:
 
-* Add '&' command
- - Shorthand for IN "Name" \n &attr here=text \n ENDIN
-
 * Improve exit bracket handling: (aliasify)
  - Make sure there are no duplicate exit aliases in a room.
  - Add --stripbrackets option to mimic old --nobrackets behavior.
  - Add --autobracket option to add brackets to exits that don't have them.
    If given, possible, and no <b>rackets, bracket based on first given alias.
 
-* Allow exit name tagging, and handle tagged exits correctly
- - Figure out how to get the DBRef # of opened exits.
- - @listen may be the best option.
- - Making an exit's @id ROOM_ID~EXIT_ID may be helpful.
+* Add warnings:
+ - Warn when a room has no entrances and isn't a @parent or zone master.
 
 * Make MuGraph handle same-named rooms in different ATTR_BASEs.
  - This may just be a "builder beware" scenario.
@@ -25,10 +20,17 @@ Small features:
 * Complete "IN" and "ON" parsing
  - Might not be possible due to MPP, in which case I scrap MPP.
 
-* Make a way to parent and add code to room parents
+* Make a way to make parents and add code to room parents
  - CREATE THING "Name" command might work.
 
+* Implement exit name tagging
+ - This is probably a bad idea, since exits are used by typing their names.
+ - Figure out how to get the DBRef # of opened exits.
+ - @listen may be the best option.
+ - Making an exit's @id ROOM_ID~EXIT_ID may be helpful.
+
 Big features:
+
 * No-@teleport building.
  - Add a depth-first search to the graph and walk in while building instead
    of teleporting around everywhere
