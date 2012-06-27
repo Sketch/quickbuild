@@ -29,6 +29,7 @@ Small features:
  - @listen may be the best option.
  - Making an exit's @id ROOM_ID~EXIT_ID may be helpful.
 
+
 Big features:
 
 * No-@teleport building.
@@ -55,6 +56,10 @@ Big features:
  - INCLUDE command, handled recursively in process_file. Easy, but worthless?
  - MACRO "name" and CALL "name" commands, with $vars (like $current_room)?
 
+* Implement a test suite
+ - I have a number of files I used for testing, but no coded pass/fail system
+
+ 
 FEATURE CREEP:
 * Improve ChatChart
  - Arrows for which direction the exits go
