@@ -689,6 +689,11 @@ def process_graph(graph)
 		}
 	}
 
+	has_entrance = Hash[graph.edgelist.map {|exitedge| [exitedge.to_room, true] }]
+	(rooms - has_entrance.keys).each {|roomnode|
+		output << "think WARNING: Created room with no entrances: #{roomnode.name}"
+	}
+
 	return output
 end
 

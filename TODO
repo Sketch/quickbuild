@@ -6,16 +6,13 @@ Small features:
  - Add --autobracket option to add brackets to exits that don't have them.
    If given, possible, and no <b>rackets, bracket based on first given alias.
 
-* Add warnings:
- - Warn when a room has no entrances and isn't a @parent or zone master.
+* Add STARTING-IN command
+ - STARTING-IN specifies that the room the user is standing in is X
+ - (also considering a STARTING-ON, but you can't be -IN- an exit.)
 
 * Make MuGraph handle same-named rooms in different ATTR_BASEs.
  - This may just be a "builder beware" scenario.
  - Lookup rooms based on [nil,name], iff duplicates then on [attr_base,name]
-
-* Add STARTING-IN command
- - STARTING-IN specifies that the room the user is standing in is X
- - (also considering a STARTING-ON, but you can't be -IN- an exit.)
 
 * Complete "IN" and "ON" parsing
  - Might not be possible due to MPP, in which case I scrap MPP.
