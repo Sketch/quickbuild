@@ -30,7 +30,7 @@
 # ENDON
 #
 
-VERSION='2.00'
+VERSION='2.10'
 
 require 'optparse'
 require './statemachine.rb'
@@ -53,6 +53,7 @@ options[:brackets] = true
 options[:bidirectional_reverse] = true
 options[:debug] = false
 options[:configfilename] = ['.qbcfg', 'qb.cfg', ENV['HOME'] + '.qbcfg', ENV['HOME'] + 'qb.cfg']
+options[:nosidefx] = false
 
 OptionParser.new do |opts|
 	opts.banner = <<EOT.split(/\n/).join("\n")
@@ -78,6 +79,9 @@ EOT
 	end
 	opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
 		options[:bidirectional_reverse] = false
+	end
+	opts.on('--nosidefx', "Don't generate code containing side-effect functions; code won't work on TinyMUX nor RhostMUSH.") do
+		options[:nosidefx] = true
 	end
 	opts.on("-d", "--debug", "Show debug output") do
 		options[:debug] = true
@@ -587,7 +591,7 @@ def wrap_text(initial_tab, tab, text, width = 75)
 end
 
 
-def process_graph(graph)
+def process_graph(graph, options = {})
 	output = []
 	rooms = graph.nodes()
 	rooms.sort! {|a,b|
@@ -617,18 +621,23 @@ def process_graph(graph)
 		end
 	}
 	if attr_bases_made.length > 0 then
-		output << "think Constructing attribute trees (legacy support)"
+		output << "think Constructing attribute trees (legacy PennMUSH support)"
 		output.concat(attr_bases_made.keys)
 	end
 
 	unbuilt_parents = graph.id_parents.select {|k,v| v.class == Hash}
 	if unbuilt_parents.length > 0 then
-		output << "think Creating room & exit parents as things"
+		output << "think Creating room & exit parents " + (options[:nosidefx] ? "as rooms" : "as things")
 		unbuilt_parents.each {|k,v|
 			room = graph.new_room(k)
 			room.attr_base = v[:attr_base]
 			graph.id_parents.store(k, room)
-			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+			if options[:nosidefx] then
+				output << "@dig/teleport #{room.name}"
+				output << "@set me=#{room.attr_base}#{room.id}:%l"
+			else
+				output << "think set(me,#{room.attr_base}#{room.id}:[create(#{room.name},10)])"
+			end
 			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@link [v(#{room.attr_base}#{room.id})]=me"
@@ -637,12 +646,17 @@ def process_graph(graph)
 
 	unbuilt_zones = graph.id_zones.select {|k,v| v.class == Hash}
 	if unbuilt_zones.length > 0 then
-		output << "think Creating room & exit zones as things"
+		output << "think Creating room & exit zones " + (options[:nosidefx] ? "as rooms" : "as things")
 		unbuilt_zones.each {|k,v|
 			room = graph.new_room(k)
 			room.attr_base = v[:attr_base]
 			graph.id_zones.store(k, room)
-			output << "@set me=#{room.attr_base}#{room.id}:[create(#{room.name},10)]"
+			if options[:nosidefx] then
+				output << "@dig/teleport #{room.name}"
+				output << "@set me=#{room.attr_base}#{room.id}:%l"
+			else
+				output << "think set(me,#{room.attr_base}#{room.id}:[create(#{room.name},10)])"
+			end
 			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@link [v(#{room.attr_base}#{room.id})]=me"
@@ -652,11 +666,21 @@ def process_graph(graph)
 	output << "think Digging Rooms"
 	rooms.each {|roomnode|
 		output << "@dig/teleport #{roomnode.name}"
-		output << "@set me=#{roomnode.attr_base}#{roomnode.id}:%l"
+		if options[:nosidefx] then
+			output << "@set me=#{roomnode.attr_base}#{roomnode.id}:%l"
+		else
+			output << "think set(me,#{roomnode.attr_base}#{roomnode.id}:%l)"
+		end
 		if roomnode.parent then
 			output << "@parent here=#{roomnode.parent}" if roomnode.parent_type == :raw
 			p = graph[roomnode.parent]
-			output << "@parent here=[v(#{p.attr_base}#{p.id})]" if roomnode.parent_type == :id
+			if roomnode.parent_type == :id then
+				if options[:nosidefx] then
+					output << "@parent here=[v(#{p.attr_base}#{p.id})]"
+				else
+					output << "think parent(here,[v(#{p.attr_base}#{p.id})])"
+				end
+			end
 		end
 		if roomnode.zone then
 			output << "@chzone here=#{roomnode.zone}" if roomnode.zone_type == :raw
@@ -677,7 +701,13 @@ def process_graph(graph)
 			if exitedge.parent then
 				output << "@parent #{shortname}=#{exitedge.parent}" if exitedge.parent_type == :raw
 				p = graph[exitedge.parent] # Exit parents are not exits
-				output << "@parent #{shortname}=[v(#{p.attr_base}#{p.id})]" if exitedge.parent_type == :id
+				if exitedge.parent_type == :id then
+					if options[:nosidefx] then
+						output << "@parent #{shortname}=[v(#{p.attr_base}#{p.id})]"
+					else
+						output << "think parent(#{shortname},[v(#{p.attr_base}#{p.id})])"
+					end
+				end
 			end
 			if exitedge.zone then
 				output << "@chzone #{shortname}=#{exitedge.zone}" if exitedge.zone_type == :raw
@@ -753,5 +783,5 @@ if options[:debug] && CHATCHART then
 	puts g.to_canvas(ChatChart::L1Line)
 end
 
-softcode = process_graph(graph)
+softcode = process_graph(graph, options)
 puts(softcode)

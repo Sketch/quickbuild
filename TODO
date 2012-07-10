@@ -5,6 +5,7 @@ Small features:
  - Add --stripbrackets option to mimic old --nobrackets behavior.
  - Add --autobracket option to add brackets to exits that don't have them.
    If given, possible, and no <b>rackets, bracket based on first given alias.
+   Prefer: Not-used alias, length{2,}, only capital words, first[2] second[1]
 
 * Add STARTING-IN command
  - STARTING-IN specifies that the room the user is standing in is X
@@ -33,10 +34,6 @@ Big features:
  - Add a depth-first search to the graph and walk in while building instead
    of teleporting around everywhere
  - In command-style, may require fancy @dig operations. Might be impossible?
-
-* Denser modern PennMUSH building output / sidefx
- - New PennMUSH will let you build remotely.
- - @set me=ATTR_BASE.ID:[dig()], instead of @teleporting around.
 
 * Add partial grid constructions
  - Let the user define a number of DBrefs for prebuilt rooms and exits.
