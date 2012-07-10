@@ -74,7 +74,7 @@ EOT
 	opts.on("--no-config-file", "Don't use any configuration file.") do
 		options[:configfilename] = nil
 	end
-	opts.on("-b", "--nobrackets", "Don't use <B>racket style of exit naming.") do |b|
+	opts.on("-b", "--nobrackets", "Don't detect <B>racket style of exit naming.") do |b|
 		options[:brackets] = !b
 	end
 	opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do

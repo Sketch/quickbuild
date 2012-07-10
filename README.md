@@ -193,7 +193,8 @@ or RhostMUSH.
 
 By default, *Quickbuild* assumes that you like the &lt;B&gt;racket style
 of exit naming, where the abbreviation in the brackets is the short
-name for the exit.
+name for the exit. Use this option to keep *Quickbuild* from adding aliases
+to exits when it detects a bracketed exit name.
 
 ### --noreverse
 
