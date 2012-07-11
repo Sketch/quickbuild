@@ -33,7 +33,16 @@
 VERSION='2.10'
 
 require 'optparse'
-require './statemachine.rb'
+
+# A patch for Ruby versions less than 1.9.2
+unless Kernel.respond_to?(:require_relative)
+	module Kernel
+		def require_relative(path)
+			require File.join(File.dirname(caller[0]), path.to_str)
+		end
+	end
+end
+require_relative 'statemachine.rb'
 
 
 # Program process:
