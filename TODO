@@ -6,6 +6,7 @@ Small features:
  - Add --autobracket option to add brackets to exits that don't have them.
    If given, possible, and no <b>rackets, bracket based on first given alias.
    Prefer: Not-used alias, length{2,}, only capital words, first[2] second[1]
+ - Make template for how to lay out exits, <I>n, <P> Pre, and post <P>.
 
 * Add STARTING-IN command
  - STARTING-IN specifies that the room the user is standing in is X
@@ -33,12 +34,14 @@ Big features:
 * No-@teleport building.
  - Add a depth-first search to the graph and walk in while building instead
    of teleporting around everywhere
- - In command-style, may require fancy @dig operations. Might be impossible?
+ - In command-style, may require fancy @dig operations.
+ - Might be IMPOSSIBLE to code this with compatibility for all MUs.
 
 * Add partial grid constructions
  - Let the user define a number of DBrefs for prebuilt rooms and exits.
  - Probably by :BUILT_ROOM <id> <dbref> and :BUILT_EXIT <id> <dbref> opcodes.
  - Maybe also :BUILT_THING <id> <dbref> for room/exit parents.
+ - A simpler form of this is allowing DBRef#s in place of room and exit names
 
 * Check @quota before building begins.
  - How do we kill the rest of the building commands after a check!?

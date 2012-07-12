@@ -58,22 +58,25 @@ require_relative 'statemachine.rb'
 
 # Section: Parse options
 options = {}
+options[:configfilename] = ['.qbcfg', 'qb.cfg', ENV['HOME'] + '.qbcfg', ENV['HOME'] + 'qb.cfg']
+options[:unmanaged] = false
 options[:brackets] = true
 options[:bidirectional_reverse] = true
-options[:debug] = false
-options[:configfilename] = ['.qbcfg', 'qb.cfg', ENV['HOME'] + '.qbcfg', ENV['HOME'] + 'qb.cfg']
 options[:nosidefx] = false
+options[:debug] = false
 
 OptionParser.new do |opts|
 	opts.banner = <<EOT.split(/\n/).join("\n")
 Quickbuild v#{VERSION}    - offline MUSH building tool
 Released under the same terms as PennMUSH
 
-Quickbuild is a ruby script that lets you quickly lay out a MUSH area
+*Quickbuild* is a Ruby script that lets you quickly lay out a MUSH area
 (a set of rooms connected by exits, optionally zoned and/or parented)
-in an easy-to-use format. It converts this file into uploadble MUSH
-code. It's smart about cardinal directions (aliases and reverse exits),
-<b>racket style exit naming, and a few other things.
+in an easy-to-use format in a text file. It converts this file into
+uploadable MUSH code. It's smart about cardinal directions (aliases and
+reverse exits), <b>racket style exit-naming, and a few other things. It
+can build over and modify areas already built by a *Quickbuild* script,
+enabling easy offline management of a whole MUSH grid.
 
 Usage: quickbuild.rb [options] inputfile > outfile.txt
 EOT
@@ -89,8 +92,12 @@ EOT
 	opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
 		options[:bidirectional_reverse] = false
 	end
+	opts.on("--unmanaged", "Don't check for existing exits nor ATTR_BASE attributes; Build a new area.") do
+		options[:unmanaged] = true
+	end
 	opts.on('--nosidefx', "Don't generate code containing side-effect functions; code won't work on TinyMUX nor RhostMUSH.") do
 		options[:nosidefx] = true
+		options[:unmanged] = true
 	end
 	opts.on("-d", "--debug", "Show debug output") do
 		options[:debug] = true
@@ -601,6 +608,8 @@ end
 
 
 def process_graph(graph, options = {})
+	abort("Cannot use managed mode with --nosidefx option") if ! options[:unmanaged] && options[:nosidefx]
+
 	output = []
 	rooms = graph.nodes()
 	rooms.sort! {|a,b|
@@ -641,11 +650,15 @@ def process_graph(graph, options = {})
 			room = graph.new_room(k)
 			room.attr_base = v[:attr_base]
 			graph.id_parents.store(k, room)
+			attrname = "#{room.attr_base}#{room.id}"
 			if options[:nosidefx] then
 				output << "@dig/teleport #{room.name}"
-				output << "@set me=#{room.attr_base}#{room.id}:%l"
+				output << "@set me=#{attrname}:%l"
+			elsif options[:unmanaged] then
+					output << "@dig/teleport #{room.name}"
+					output << "think set(me,#{attrname}:[create(#{room.name},10)])"
 			else
-				output << "think set(me,#{room.attr_base}#{room.id}:[create(#{room.name},10)])"
+					output << "think set(me,#{attrname}:[default(me/#{attrname},create(#{room.name},10))])"
 			end
 			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
@@ -660,11 +673,15 @@ def process_graph(graph, options = {})
 			room = graph.new_room(k)
 			room.attr_base = v[:attr_base]
 			graph.id_zones.store(k, room)
+			attrname = "#{room.attr_base}#{room.id}"
 			if options[:nosidefx] then
 				output << "@dig/teleport #{room.name}"
-				output << "@set me=#{room.attr_base}#{room.id}:%l"
+				output << "@set me=#{attrname}:%l"
+			elsif options[:unmanaged] then
+					output << "@dig/teleport #{room.name}"
+					output << "think set(me,#{attrname}:[create(#{room.name},10)])"
 			else
-				output << "think set(me,#{room.attr_base}#{room.id}:[create(#{room.name},10)])"
+					output << "think set(me,#{attrname}:[default(me/#{attrname},create(#{room.name},10))])"
 			end
 			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
@@ -674,11 +691,16 @@ def process_graph(graph, options = {})
 
 	output << "think Digging Rooms"
 	rooms.each {|roomnode|
-		output << "@dig/teleport #{roomnode.name}"
+		attrname = "#{roomnode.attr_base}#{roomnode.id}"
 		if options[:nosidefx] then
-			output << "@set me=#{roomnode.attr_base}#{roomnode.id}:%l"
+			output << "@dig/teleport #{roomnode.name}"
+			output << "@set me=#{attrname}:%l"
+		elsif options[:unmanaged] then
+			output << "@dig/teleport #{roomnode.name}"
+			output << "think set(me,#{attrname}:%l)"
 		else
-			output << "think set(me,#{roomnode.attr_base}#{roomnode.id}:%l)"
+			output << "think set(me,#{attrname}:[default(me/#{attrname},switch(functions(),* DIG *,dig(#{roomnode.name}),create(#{roomnode.name},,r)))])"
+			output << "@teleport [v(#{attrname})]"
 		end
 		if roomnode.parent then
 			output << "@parent here=#{roomnode.parent}" if roomnode.parent_type == :raw
@@ -706,7 +728,11 @@ def process_graph(graph, options = {})
 		output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]" if roomnode.edges.length > 0
 		roomnode.edges.each {|exitedge_id, exitedge|
 			shortname = exitedge.name.partition(';')[0]
-			output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
+			if options[:nosidefx] || options[:unmanaged] then
+				output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
+			else
+				output << "@teleport [setr(0,ifelse(t(setr(0,locate(me,#{shortname},eE))),r(0),switch(functions(),* OPEN *,open(#{exitedge.name}),create(#{exitedge.name},,e))))][link(%q0,v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id}))]=here"
+			end
 			if exitedge.parent then
 				output << "@parent #{shortname}=#{exitedge.parent}" if exitedge.parent_type == :raw
 				p = graph[exitedge.parent] # Exit parents are not exits

@@ -12,7 +12,9 @@
 (a set of rooms connected by exits, optionally zoned and/or parented)
 in an easy-to-use format in a text file.  It's smart about cardinal
 directions (aliases and reverse exits), &lt;b&gt;racket style exit-naming,
-and a few other things.
+and a few other things. It can build over and modify areas already built
+by a *Quickbuild* script, enabling easy offline management of a whole MUSH
+grid.
 
 *Quickbuild* is a very simple Ruby script: It has no dependencies, and can be
 run on any modern Ruby without installing gems or libraries.  It accepts a
@@ -185,9 +187,31 @@ Prints a usage summary
 
 By default, *Quickbuild* produces output containing side-effect functions.
 Use this option if you want the produced output to only use @commands to
-build. Output produced with the --nosidefx option may not work on some MUSH
+build. The --nosidefx option inherently disables managed mode (see below).
+Output produced with the --nosidefx option may not work on some MUSH
 codebases. Of particular note, such output will not work on either TinyMUX
 or RhostMUSH.
+
+### --unmanaged
+
+By default, *Quickbuild* assumes that it should produce output that will
+modify and extend an area that is already built, not build an entirely new
+area.
+The code produced will not dig a new room if a `<attr_base><room_name>`
+attribute exists on the Player executing the code, nor will it open an exit
+if an exit of the same name exists in the relevant room. It WILL re-link
+an existing exit of a given name to a changed destination.
+The code produced WILL change the parents, zones, and flags, do @describes,
+and execute the IN and ON clauses for all rooms and exits.
+Most importantly, the code produced will NOT remove exits and rooms no longer
+mentioned in the input file. That job falls upon the MUSH's warning system
+and the builder player.
+NOTE: Managed mode cannot be used with the --nosidefx option. Managed mode
+will also not work on MUSH codebases without these functions:
+dig() or a create() that can make rooms, link(), open() or a create() that
+can make exits, parent() that alters parents, setr() and r(), and a switch()
+that does wildcard matching.
+(All codebases are assumed to have ifelse(), t(), and v().)
 
 ### --nobrackets
 
@@ -247,7 +271,7 @@ Here is an example that illustrates most of the features:
     @lock s = dayofweek/Sat
     ENDON
 
-### Resulting Output
+### Resulting Output (with --unmanaged)
 
     think Creating room & exit zones as things
     @dig/teleport City Zone
