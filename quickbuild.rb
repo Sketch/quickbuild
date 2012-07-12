@@ -703,7 +703,7 @@ def process_graph(graph, options = {})
 	output << "think Linking Rooms"
 	rooms.each {|roomnode|
 		output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0
-		output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]"
+		output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]" if roomnode.edges.length > 0
 		roomnode.edges.each {|exitedge_id, exitedge|
 			shortname = exitedge.name.partition(';')[0]
 			output << "@open #{exitedge.name}=[v(#{exitedge.to_room.attr_base}#{exitedge.to_room.id})]"
