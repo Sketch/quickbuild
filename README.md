@@ -2,9 +2,9 @@
 
 *Quickbuild* - offline MUSH building tool
 
-# SYNOPSIS
+# USAGE
 
-*quickbuild* [options] area.txt
+`quickbuild.rb [options] input1.txt [input2.txt [...]] > output.txt`
 
 # DESCRIPTION
 
