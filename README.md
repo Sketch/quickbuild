@@ -70,7 +70,8 @@ Anywhere you can use a room name, you can also use a name tag.
 ### Dbref storage
 
 When rooms are built, their dbrefs are stored on the building player
-using attributes with names like `ROOM.<room_name>`. When storing
+using attributes with names like `ROOM.<room_name>`. If a room has a tag,
+the attribute will look like `ROOM.<room_name>$22<tag_name>`. When storing
 room names in attributes, spaces names are converted to underscores,
 and special characters are converted to $ followed by the ASCII hex
 code for that character.
