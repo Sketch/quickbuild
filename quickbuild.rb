@@ -4,7 +4,8 @@
 # Improved, Ruby version by Ryan Dowell, Sketch@M*U*S*H, 2012
 # Released under the same license terms as PennMUSH
 #
-# Usage: quickbuild infile > output.txt
+# Usage:
+# quickbuild.rb [options] inputfile1 [inputfile2 [...]] > outfile.txt
 # Then upload the code in output.txt to a MUSH.
 #
 # Quickbuild file syntax:
@@ -70,15 +71,15 @@ OptionParser.new do |opts|
 Quickbuild v#{VERSION}    - offline MUSH building tool
 Released under the same terms as PennMUSH
 
-*Quickbuild* is a Ruby script that lets you quickly lay out a MUSH area
+Quickbuild is a Ruby script that lets you quickly lay out a MUSH area
 (a set of rooms connected by exits, optionally zoned and/or parented)
 in an easy-to-use format in a text file. It converts this file into
 uploadable MUSH code. It's smart about cardinal directions (aliases and
 reverse exits), <b>racket style exit-naming, and a few other things. It
-can build over and modify areas already built by a *Quickbuild* script,
+can build over and modify areas already built by a Quickbuild script,
 enabling easy offline management of a whole MUSH grid.
 
-Usage: quickbuild.rb [options] inputfile > outfile.txt
+Usage: quickbuild.rb [options] inputfile1 [inputfile2 [...]] > outfile.txt
 EOT
 	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of defaults.") do |c|
 		options[:configfilename] = c

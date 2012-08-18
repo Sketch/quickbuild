@@ -2,10 +2,6 @@
 
 *Quickbuild* - offline MUSH building tool
 
-# USAGE
-
-`quickbuild.rb [options] input1.txt [input2.txt [...]] > output.txt`
-
 # DESCRIPTION
 
 *Quickbuild* is a Ruby script that lets you quickly lay out a MUSH area
@@ -17,8 +13,35 @@ by a *Quickbuild* script, enabling easy offline management of a whole MUSH
 grid.
 
 *Quickbuild* is a very simple Ruby script: It has no dependencies, and can be
-run on any modern Ruby without installing gems or libraries.  It accepts a
-list of filenames as arguments, and produces uploadable MUSH code on stdout.
+run on any Ruby 1.9.1 or higher without installing gems or libraries.  It
+accepts a list of filenames as arguments, and outputs uploadable MUSH code.
+
+# INSTALLATION
+
+If you don't have Ruby installed, you'll need it.
+Quickbuild requires Ruby 1.9.1 or greater.
+
+Windows: I recommend http://rubyinstaller.org/ . Associate .rb files
+with the Ruby interpreter. Select "Start Command Prompt with Ruby" in
+the Start menu.
+
+Linux and OS X: I recommend http://rvm.io/ , even for OSes that have a Ruby
+in their package manager. Open a terminal and install RVM, then install a
+Ruby using RVM.
+
+Once you've installed Ruby, either git clone or download and unzip Quickbuild
+into a directory of your choosing. You can download Quickbuild before you
+install Ruby if you want; The order doesn't actually matter.
+
+# USAGE
+
+In your Ruby-enabled terminal, use `cd <directory quickbuild is in>` to change
+the directory you're in, and you should be able to print out the example
+script by doing `quickbuild.rb test_readme.qb`. To output to a file instead,
+use `quickbuild.rb test_readme.qb > output.txt`
+
+Generic syntax is:
+`quickbuild.rb [options] inputfile1 [inputfile2 [...]] > output.txt`
 
 * * *
 ## Quickbuild File Format
