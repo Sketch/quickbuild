@@ -338,7 +338,7 @@ incorrigible codebase discrepancies.
 - RhostMUSH requires the SIDEFX flag be set on the builder character.
 - RhostMUSH zones use @zone, not @chzone, as objects can have multiple zones.
   To emulate single-zoning on RhostMUSH, make an alias in your client for
-  `@chzone *=*` --> `@zone/purge %0` &lt;newline&gt; `@zone/add %0=%1`
+  `@chzone *=*` --> `@zone/purge %0 <newline> @zone/add %0=%1`
 
 If you would like to see compatibilty added for another kind of MU-like,
 please contact me. If a codebase gets enough attention, I'll try to code
