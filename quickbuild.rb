@@ -22,7 +22,7 @@
 # EXIT FLAGS: <flag list>
 # EXIT ZONE: <dbref> or "Room Name" (no, that's not an error)
 # EXIT PARENT: <dbref> or "Room Name" (no that's not an error)
-# DESC "Room Name" =Description
+# DESCRIBE "Room Name" =Description
 # IN "Room Name"
 # ... MUSH code in mpp format ...
 # ENDIN
@@ -110,6 +110,7 @@ EOT
 end.parse!
 # Program exits here if user did --help
 
+
 # Section: Input file parser
 class Action < SimpleAction
 	def unhandled_call(state, input, extra)
@@ -136,6 +137,32 @@ ESCAPE_HASH = Hash[ESCAPE_CHARS.zip(ESCAPE_WITH)]
 def buffer_escape(s)
 	return s.gsub(ESCAPE_REGEXP, ESCAPE_HASH)
 end
+
+# Make a state machine to handle input file format.
+#
+# (Documentation copied from statemachine.rb)
+# State machines have an ordered list of Actions.
+# Actions have a pattern (arg1) and a list of state modifiers (arg2)
+# Input is given one line at a time.
+# Each Action's pattern is checked against the input line.
+# If an Action's pattern matches, and has an entry for the current state,
+#  that state modifier is executed. Otherwise, matching proceeds down the list.
+#
+# The state modifier is called with up to 3 arguments depending on its arity.
+# The arguments are, in order: (current_state, input_line, extra_information)
+# * current_state is a hash with (user-defined) state information, and
+#   the :state key is used to compare if an Action's state entry matches.
+# * input_line is the current input.
+# * extra_information is a hash of user-defined key-value pairs. It also has a
+#   :matchdata key, which is the MatchData for the Action's matched pattern.
+#
+# State modifiers return [new_state, command_list]. New_state can be
+# a :symbol, or a hash with a :state => desired_state. Command_list is
+# a list of [:command_name, argument1, argument2, ...]. Exactly what these
+# mean is up to the application.
+# (End)
+# Most state modifiers here return the current_state as the new_state,
+# to preserve values in current_state.
 
 syntaxp = StateMachine.new(:default)
 syntaxp.push Action.new(/^\s*$/,
@@ -596,12 +623,12 @@ end
 # TODO: Warn on: Rooms with no entrances
 #
 # Print out MUSH code. We do it like this:
-# 1. Dig all of the rooms and store their dbrefs
+# 1. Dig all of the rooms and store their database reference numbers. (DBref)
 # 2. Visit each room, and, while there:
 #    a. Open all of the exits leading from that room, applying exit code
 #    b. Apply any room code
 # We use attributes on the player to store room dbrefs. We call them
-#   #{ATTR_BASE}.#{room.id}. Same for exit dbrefs.
+#   #{room.attr_base}#{room.id}.
 
 def wrap_text(initial_tab, tab, text, width = 75)
 	return initial_tab + text.scan(/(?:.{1,#{width}})(?:\s+|$)|(?:.{#{width}})/m).join("\n" + tab)

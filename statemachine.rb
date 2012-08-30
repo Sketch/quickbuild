@@ -1,4 +1,26 @@
 #!/usr/bin/env ruby
+# A simple finite state machine library for line-based text inputs.
+
+# State machines have an ordered list of Actions.
+# Actions have a pattern (arg1) and a list of state modifiers (arg2)
+# Input is given one line at a time.
+# Each Action's pattern is checked against the input line.
+# If an Action's pattern matches, and has an entry for the current state,
+#  that state modifier is executed. Otherwise, matching proceeds down the list.
+#
+# The state modifier is called with up to 3 arguments depending on its arity.
+# The arguments are, in order: (current_state, input_line, extra_information)
+# * current_state is a hash with (user-defined) state information, and
+#   the :state key is used to compare if an Action's state entry matches.
+# * input_line is the current input.
+# * extra_information is a hash of user-defined key-value pairs. It also has a
+#   :matchdata key, which is the MatchData for the Action's matched pattern.
+#
+# State modifiers return [new_state, command_list]. New_state can be
+# a :symbol, or a hash with a :state => desired_state. Command_list is
+# a list of [:command_name, argument1, argument2, ...]. Exactly what these
+# mean is up to the application.
+
 
 # A flexible default action class.
 #
@@ -18,8 +40,7 @@
 class SimpleAction
 	attr_accessor :pattern
 	def initialize(pattern, *args)
-		# raise TypeError if ! pattern.respond_to(:match)
-		pattern.match('Test string')
+		pattern.match('Test string') # Test and fail if ! respond_to?(:match)
 		@pattern = pattern
 		args.each {|arg| self + arg}
 	end
