@@ -720,7 +720,6 @@ def process_graph(graph, options = {})
 			output << "@chzone here=[v(#{z.attr_base}#{z.id})]" if roomnode.zone_type == :id
 		end
 		output << "@set here=#{roomnode.flags}" if roomnode.flags
-		output << roomnode.buffer if roomnode.buffer != ''
 	}
 
 	output << "think Linking Rooms"
@@ -753,6 +752,7 @@ def process_graph(graph, options = {})
 			output << "@set #{shortname}=#{exitedge.flags}" if exitedge.flags
 			output << exitedge.buffer if exitedge.buffer != ''
 		}
+		output << roomnode.buffer if roomnode.buffer != ''
 	}
 
 	has_entrance = Hash[graph.edgelist.map {|exitedge| [exitedge.to_room, true] }]
