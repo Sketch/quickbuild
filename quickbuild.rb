@@ -752,7 +752,7 @@ def process_graph(graph, options = {})
 	output << "think Linking Rooms"
 	rooms.each {|roomnode|
 		output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0
-		output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]" if roomnode.edges.length > 0
+		output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]" if roomnode.edges.length > 0 || roomnode.buffer != ''
 		roomnode.edges.each {|exitedge_id, exitedge|
 			shortname = exitedge.name.partition(';')[0]
 			if options[:nosidefx] || options[:unmanaged] then
