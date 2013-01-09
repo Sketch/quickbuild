@@ -683,7 +683,6 @@ def process_graph(graph, options = {})
 				output << "@dig/teleport #{room.name}"
 				output << "@set me=#{attrname}:%l"
 			elsif options[:unmanaged] then
-					output << "@dig/teleport #{room.name}"
 					output << "think set(me,#{attrname}:[create(#{room.name},10)])"
 			else
 					output << "think set(me,#{attrname}:[default(me/#{attrname},create(#{room.name},10))])"
@@ -706,7 +705,6 @@ def process_graph(graph, options = {})
 				output << "@dig/teleport #{room.name}"
 				output << "@set me=#{attrname}:%l"
 			elsif options[:unmanaged] then
-					output << "@dig/teleport #{room.name}"
 					output << "think set(me,#{attrname}:[create(#{room.name},10)])"
 			else
 					output << "think set(me,#{attrname}:[default(me/#{attrname},create(#{room.name},10))])"
