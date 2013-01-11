@@ -126,6 +126,12 @@ if you're not providing dbrefs, you should be providing a room
 name, even if you're setting exit zone/parent. That is, *Quickbuild*
 will generate a room as the exit parent (which doesn't hurt).
 
+If you specify a zone or parent by name and do not include it in any
+building instructions, the object will be built as a Thing on the MUSH.
+When adding Custom Code (see below) to an object built as a Thing,
+address the thing with "here". In example,
+"`@aenter here=@pemit %#=You arrive in %n.`".
+
 Note that you cannot parent a room parent with *Quickbuild*. It's trivial
 to do so manually, however.
 

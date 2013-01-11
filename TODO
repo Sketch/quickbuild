@@ -19,9 +19,6 @@ Small features:
 * Complete "IN" and "ON" parsing
  - Might not be possible due to MPP, in which case I scrap MPP.
 
-* Make a way to make parents and add code to room parents
- - CREATE THING "Name" command might work.
-
 * Implement exit name tagging
  - This is probably a bad idea, since exits are used by typing their names.
  - Figure out how to get the DBRef # of opened exits.

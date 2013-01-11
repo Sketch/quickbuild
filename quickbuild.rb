@@ -338,6 +338,7 @@ end
 
 class RoomNode
 	attr_accessor :id, :name
+	attr_accessor :type
 	attr_reader :edges
 	attr_accessor :attr_base
 	attr_accessor :parent, :parent_type
@@ -346,6 +347,7 @@ class RoomNode
 	def initialize(id)
 		@id = mush_id_format(id)
 		@name = id_to_name(id)
+		@type = :room
 		@edges = {}
 		@attr_base = nil
 		@parent = nil
@@ -364,6 +366,9 @@ class RoomNode
 	end
 	def to_s()
 		return @id
+	end
+	def set_buffer(s)
+		@buffer = s
 	end
 	def append_buffer(s)
 		@buffer.concat(s)
@@ -501,7 +506,8 @@ def process_opcodes(opcode_array, options = {})
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
-					:name => id_to_name(operand[0])}
+					:name => id_to_name(operand[0]),
+					:buffer => ''}
 				graph.id_parents.store(operand[0], room)
 			end
 			stateobj[:room_parent_type] = operand[1]
@@ -512,7 +518,8 @@ def process_opcodes(opcode_array, options = {})
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
-					:name => id_to_name(operand[0])}
+					:name => id_to_name(operand[0]),
+					:buffer => ''}
 				graph.id_zones.store(operand[0], room)
 			end
 			stateobj[:room_zone_type] = operand[1]
@@ -528,7 +535,8 @@ def process_opcodes(opcode_array, options = {})
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
-					:name => id_to_name(operand[0])}
+					:name => id_to_name(operand[0]),
+					:buffer => ''}
 				graph.id_parents.store(operand[0], room)
 			end
 			stateobj[:exit_parent_type] = operand[1]
@@ -541,7 +549,8 @@ def process_opcodes(opcode_array, options = {})
 				room = graph[operand[0]] || # Can return nil
 					{:attr_base => stateobj[:attr_base],
 					:id => mush_id_format(operand[0]),
-					:name => id_to_name(operand[0])}
+					:name => id_to_name(operand[0]),
+					:buffer => ''}
 				graph.id_zones.store(operand[0], room)
 			end
 			stateobj[:exit_zone_type] = operand[1]
@@ -563,6 +572,8 @@ def process_opcodes(opcode_array, options = {})
 					room.zone_type = stateobj[:room_zone_type]
 				end
 				room.flags = stateobj[:room_flags]
+				room.set_buffer(graph.id_zones[operand[0]][:buffer]) if graph.id_zones[operand[0]]
+				room.set_buffer(graph.id_parents[operand[0]][:buffer]) if graph.id_parents[operand[0]]
 			end
 			graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
 			graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
@@ -601,11 +612,19 @@ def process_opcodes(opcode_array, options = {})
 			exitedge.flags = stateobj[:exit_flags]
 
 		when :BUFFER_ROOM
-			room = graph[operand[0]]
-			die(stateobj, "Room #{operand[0]} doesn't exist") if ! room
-			room.append_buffer(operand[1])
+			# We can add a buffer to any room built or guaranteed to be built.
+			if graph[operand[0]] then
+				graph[operand[0]].append_buffer(operand[1])
+			elsif graph.id_parents[operand[0]] then
+				graph.id_parents[operand[0]][:buffer] += operand[1]
+			elsif graph.id_zones[operand[0]] then
+				graph.id_zones[operand[0]][:buffer] += operand[1]
+			else
+				die(stateobj, "Room #{operand[0]} doesn't exist")
+			end
 
 		when :BUFFER_EXIT
+			# Exits must be built in a room before they can have a buffer.
 			room = graph[operand[0]]
 			die(stateobj, "Room #{operand[0]} doesn't exist") if room == nil
 			exitedge = room.lookup_exit(operand[1])
@@ -634,6 +653,21 @@ def wrap_text(initial_tab, tab, text, width = 75)
 	return initial_tab + text.scan(/(?:.{1,#{width}})(?:\s+|$)|(?:.{#{width}})/m).join("\n" + tab)
 end
 
+def print_room_buffer(roomnode)
+	output = []
+	if roomnode.buffer != ''
+		if roomnode.type == :thing then
+			output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]=here"
+			output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]"
+		end
+		output << roomnode.buffer
+		if roomnode.type == :thing then
+			output << "@teleport [loc(v(#{roomnode.attr_base}#{roomnode.id}))]"
+			output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]=me"
+		end
+	end
+	return output
+end
 
 def process_graph(graph, options = {})
 	abort("Cannot use managed mode with --nosidefx option") if ! options[:unmanaged] && options[:nosidefx]
@@ -677,6 +711,8 @@ def process_graph(graph, options = {})
 		unbuilt_parents.each {|k,v|
 			room = graph.new_room(k)
 			room.attr_base = v[:attr_base]
+			room.type = :thing
+			room.set_buffer(v[:buffer])
 			graph.id_parents.store(k, room)
 			attrname = "#{room.attr_base}#{room.id}"
 			if options[:nosidefx] then
@@ -690,6 +726,7 @@ def process_graph(graph, options = {})
 			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@link [v(#{room.attr_base}#{room.id})]=me"
+			output += print_room_buffer(room) if ! rooms.include?(room)
 		}
 	end
 
@@ -699,6 +736,8 @@ def process_graph(graph, options = {})
 		unbuilt_zones.each {|k,v|
 			room = graph.new_room(k)
 			room.attr_base = v[:attr_base]
+			room.type = :thing
+			room.set_buffer(v[:buffer])
 			graph.id_zones.store(k, room)
 			attrname = "#{room.attr_base}#{room.id}"
 			if options[:nosidefx] then
@@ -712,6 +751,7 @@ def process_graph(graph, options = {})
 			output << "@lock [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@lock/zone [v(#{room.attr_base}#{room.id})]= =me"
 			output << "@link [v(#{room.attr_base}#{room.id})]=me"
+			output += print_room_buffer(room) if ! rooms.include?(room)
 		}
 	end
 
@@ -777,7 +817,7 @@ def process_graph(graph, options = {})
 			output << "@set #{shortname}=#{exitedge.flags}" if exitedge.flags
 			output << exitedge.buffer if exitedge.buffer != ''
 		}
-		output << roomnode.buffer if roomnode.buffer != ''
+		output += print_room_buffer(roomnode)
 	}
 
 	has_entrance = Hash[graph.edgelist.map {|exitedge| [exitedge.to_room, true] }]
