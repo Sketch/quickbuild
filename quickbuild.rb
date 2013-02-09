@@ -575,6 +575,7 @@ def process_opcodes(opcode_array, options = {})
 				room.set_buffer(graph.id_zones[operand[0]][:buffer]) if graph.id_zones[operand[0]]
 				room.set_buffer(graph.id_parents[operand[0]][:buffer]) if graph.id_parents[operand[0]]
 			end
+			# If we just made a Room Parent/Zone into a real room, make the list reference the real object.
 			graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
 			graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
 

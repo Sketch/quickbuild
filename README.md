@@ -51,7 +51,8 @@ An input file for *Quickbuild* can include the following:
 ### Comments
 
 Lines beginning with # are considered comments and ignored.
-In an IN or ON section (see below), only lines beginning with @@ are ignored.
+In an IN or ON section (see <a href="#custom-code">Custom Code</a>),
+only lines beginning with @@ are ignored.
 
 ### Building commands
 
@@ -112,25 +113,19 @@ You can set a default zone to be assigned to rooms with the line
 
     ROOM ZONE: <dbref of ZMO> or "Room Name"
 
-*Quickbuild* will generate @chzone commands setting the zone of any rooms
-defined after the ROOM ZONE: command. Note that a room is defined when it
-is first used in the input. You may use additional ROOM ZONE: commands
-to change the active room zone.
+*Quickbuild* will generate @chzone commands to set	the zone of any rooms
+defined after the ROOM ZONE: command. You may use additional ROOM ZONE:
+commands to change the active room zone. Note that a room is defined when
+it is first used in the input. Even if you use a room name again later, the
+room's parent/zone will be the first parent/zone it was defined under.
 
-If you provide a room name instead of a dbref, the room will be
-created by the script *Quickbuild* generates.
-
-You can set default exit zones, room parents, and exit parents
-with EXIT ZONE:, ROOM PARENT:, and EXIT PARENT: commands. Note that
-if you're not providing dbrefs, you should be providing a room
-name, even if you're setting exit zone/parent. That is, *Quickbuild*
-will generate a room as the exit parent (which doesn't hurt).
-
-If you specify a zone or parent by name and do not include it in any
-building instructions, the object will be built as a Thing on the MUSH.
-When adding Custom Code (see below) to an object built as a Thing,
-address the thing with "here". In example,
-"`@aenter here=@pemit %#=You arrive in %n.`".
+In the same way, you can set default exit zones, room parents, and exit parents
+with EXIT ZONE:, ROOM PARENT:, and EXIT PARENT: commands. If you specify
+a zone or parent by name and do not include it in any building instructions,
+the object will be built as a Thing on the MUSH.  When adding Custom Code
+(see <a href="#custom-code">Custom Code</a>)
+to an object built as a Thing, address the
+thing with "here". In example: "`@aenter here=@pemit %#=You arrive in %n.`".
 
 Note that you cannot parent a room parent with *Quickbuild*. It's trivial
 to do so manually, however.
