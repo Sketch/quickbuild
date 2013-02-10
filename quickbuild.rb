@@ -601,6 +601,7 @@ def process_opcodes(opcode_array, options = {})
 			die(stateobj, "No reverse exit for #{operand[0]}") if ! reverse
 			die(stateobj, "Room #{operand[1]} doesn't exist") if ! from_room
 			die(stateobj, "Room #{operand[2]} doesn't exist") if ! to_room
+			die(stateobj, "There is already an exit #{reverse} in room #{operand[2]} (while making reverse exit for #{operand[0]})") if to_room.lookup_exit(reverse)
 			exitedge = graph.new_exit(reverse, to_room, from_room, stateobj[:exit_aliases], options[:brackets])
 			if stateobj[:exit_parent] then
 				exitedge.parent = stateobj[:exit_parent]
