@@ -837,13 +837,6 @@ if options[:debug] then
 	puts "#{ARGV}"
 end
 
-begin
-	require 'chatchart' if options[:debug]
-	CHATCHART = true
-rescue LoadError
-	CHATCHART = nil
-end
-
 
 commandlist = []
 
@@ -870,21 +863,9 @@ end
 commandlist += process_file(ARGF,syntaxp)
 
 if options[:debug] then
-	commandlist.each {|cmd| puts "#{cmd}" }
+   commandlist.each {|cmd| puts "#{cmd}" }
 end
 
 graph = process_opcodes(commandlist, options)
-
-if options[:debug] && CHATCHART then
-	a = []
-	graph.edges {|edge| puts edge }
-	graph.edges {|edge|
-		a.push(edge.from_room.id.intern - edge.to_room.id.intern)
-	}
-	g = ChatChart::Graph.new << a
-	ChatChart::SmartLayout[ g ]
-	puts g.to_canvas(ChatChart::L1Line)
-end
-
 softcode = process_graph(graph, options)
 puts(softcode)
