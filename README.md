@@ -363,6 +363,9 @@ incorrigible codebase discrepancies.
 - RhostMUSH zones use @zone, not @chzone, as objects can have multiple zones.
   To emulate single-zoning on RhostMUSH, make an alias in your client for
   `@chzone *=*` --> `@zone/purge %0 <newline> @zone/add %0=%1`
+- PennMUSH 1.8.5p3 or newer. Some PennMUSH patchlevel between
+  1.8.3p13 and 1.8.5p3 fixed locate().  If you determine the minimum
+  patchlevel, please let me know.
 
 If you would like to see compatibilty added for another kind of MU-like,
 please contact me. If a codebase gets enough attention, I'll try to code
