@@ -16,6 +16,70 @@ grid.
 run on any Ruby 1.9.1 or higher without installing gems or libraries.  It
 accepts a list of filenames as arguments, and outputs uploadable MUSH code.
 
+# INTRODUCTION
+## What does Quickbuild do?
+
+*Quickbuild* is a tool that transforms a file containing lines of building instructions (described in detail below) into the necessary MUSH softcode to build those rooms. The building instructions are very compact, enabling huge or intricate grids to be built with little effort.
+
+## Why would I want to use Quickbuild?
+Even when one is very practiced with building commands (@dig, @open, @link, and @describe), building a grid by hand can be very time-consuming and error-prone. *Quickbuild* takes a lot of the manual labor out. Building a suite of connected rooms is easy, and when using *Quickbuild* most of the typing one will do is writing @describes.
+Further, if the same builder character is used for each building task, *Quickbuild* files can be used to UPDATE the grid! *Quickbuild* thusly eases the management of huge grids. *Quickbuild* will even let you break sections of the MUSH grid into separate files!
+
+## How do I use Quickbuild?
+
+### Abstract
+Large grids are typically a mesh of grids with consistently-named exits linking them.  Although even if you're working with a grid that is not an actual grid of rooms, *Quickbuild* could be useful to you just because it makes maintenance of MUSH grids a lot easier.
+However, let us continue with the assumption that the grid is indeed in a grid-like shape. The way that *Quickbuild* expects you to write out your grid is by writing down each series of adjacent rooms. Imagine drawing horizontal and vertical lines through all the rooms in your grid. First, pick the direction of travel, then list all the rooms in that direction. Each room listed in a line will be linked together.
+
+### Basic examples:
+Each line of a *Quickbuild* input file is the direction of an exit ("s"), followed by a colon, followed by the names of rooms separated by either -&gt; (for one-way exits) or &lt;-&gt; (for two-way exits). For example, the line:
+
+    "e" : "Blue" -> "Green" -> "Yellow"
+
+Would make a series of rooms that you could only travel eastward toward "yellow" through. The shape of the grid structure would look much like:
+
+    Blue-->Green-->Yellow
+
+
+An example of a grid in the shape of a C would be:
+
+    "e" : "Blue" <-> "Green" <-> "Yellow"
+    "s" : "Blue" <-> "Indigo" <-> "Purple"
+    "e" : "Purple" <-> "Red" <-> "Infrared"
+
+Which would look like:
+
+    Blue --- Green --- Yellow
+    |
+    Indigo
+    |
+    Purple -- Red --- Infrared
+
+
+To build a three-by-three cardinal directions grid, one could make the following input file:
+
+    "e" : "Ruby Corner" <-> "Amber Court" <-> "Citrine Fields"
+    "e" : "Red Plateu" <-> "Golden Valley" <-> "Yellow Plateu"
+    "e" : "Dusk Palace" <-> "Ember Court" <-> "The Pale Sector"
+
+    "s" : "Ruby Corner" <-> "Red Plateu" <-> "Dusk Palace"
+    "s" : "Amber Court" <-> "Golden Valley" <-> "Ember Court"
+    "s" : "Citrine Fields" <-> "Yellow Plateu" <-> "The Pale Sector"
+
+This would make a grid that is built in the shape of the structure below:
+
+    "Ruby Corner" ---  "Amber Court"  --- "Citrine Fields"
+         |                   |                   |
+         |                   |                   |
+    "Red Plateu"  --- "Golden Valley" --- "Yellow Plateu"
+         |                   |                   |
+         |                   |                   |
+    "Dusk Palace" ---  "Ember Court"  --- "The Pale Sector"
+
+Creating very large grids is simple with *Quickbuild*. While *Quickbuild* does excel at making large structures with many reciprocal exits, making shops off the main grid and wholly non-cardinal grids is also easy!
+
+* * *
+
 # INSTALLATION
 
 If you don't have Ruby installed, you'll need it.
