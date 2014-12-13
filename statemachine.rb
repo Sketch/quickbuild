@@ -67,11 +67,7 @@ class SimpleAction
 	end
 	def + (a)
 		raise TypeError, "Expected array, got #{a.class}" if a.class != Array
-		if self.respond_to?(:define_singleton_method) then
-			self.define_singleton_method('state_'.concat(getstate(a[0]).to_s), a[1])
-		else
-			raise "Quickbuild requires Ruby 1.9.1 or higher!"
-		end
+		self.define_singleton_method('state_'.concat(getstate(a[0]).to_s), a[1])
 		return self
 	end
 end
