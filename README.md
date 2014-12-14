@@ -1,25 +1,23 @@
-# NAME
+# Quickbuild
 
-*Quickbuild* - offline MUSH building tool
+## What is Quickbuild?
 
-# DESCRIPTION
+*Quickbuild* is a tool that lets you quickly lay out and build a MUSH area.
+*Quickbuild* transforms a file containing lines of building instructions
+(described in detail below) into the necessary MUSH softcode to build those
+rooms. The building instructions are very compact, enabling huge or intricate
+grids to be built with little effort.
 
-*Quickbuild* is a Ruby script that lets you quickly lay out a MUSH area
-(a set of rooms connected by exits, optionally zoned and/or parented)
-in an easy-to-use format in a text file.  It's smart about cardinal
-directions (aliases and reverse exits), &lt;b&gt;racket style exit-naming,
-and a few other things. It can build over and modify areas already built
-by a *Quickbuild* script, enabling easy offline management of a whole MUSH
-grid.
+*Quickbuild* has many useful features:
+- It can maintain and modify areas it already built.
+- It easily handles grids containing hundreds of rooms.
+- It allows zoning and parenting of rooms.
+- It's smart about cardinal directions (aliases and reverse exits).
+- It automatically handles, &lt;b&gt;racket style exit-naming.
 
 *Quickbuild* is a very simple Ruby script: It has no dependencies, and can be
-run on any Ruby 1.9.1 or higher without installing gems or libraries.  It
+run on any Ruby 1.9.3 or higher without installing gems or libraries.  It
 accepts a list of filenames as arguments, and outputs uploadable MUSH code.
-
-# INTRODUCTION
-## What does Quickbuild do?
-
-*Quickbuild* is a tool that transforms a file containing lines of building instructions (described in detail below) into the necessary MUSH softcode to build those rooms. The building instructions are very compact, enabling huge or intricate grids to be built with little effort.
 
 ## Why would I want to use Quickbuild?
 Even when one is very practiced with building commands (@dig, @open, @link, and @describe), building a grid by hand can be very time-consuming and error-prone. *Quickbuild* takes a lot of the manual labor out. Building a suite of connected rooms is easy, and when using *Quickbuild* most of the typing one will do is writing @describes.
