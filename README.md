@@ -81,7 +81,7 @@ Creating very large grids is simple with *Quickbuild*. While *Quickbuild* does e
 # INSTALLATION
 
 If you don't have Ruby installed, you'll need it.
-Quickbuild requires Ruby 1.9.1 or greater.
+Quickbuild requires Ruby 1.9.3 or greater.
 
 Windows: I recommend http://rubyinstaller.org/ . Associate .rb files
 with the Ruby interpreter. Select "Start Command Prompt with Ruby" in
