@@ -13,7 +13,7 @@ grids to be built with little effort.
 - It easily handles grids containing hundreds of rooms.
 - It allows zoning and parenting of rooms.
 - It's smart about cardinal directions (aliases and reverse exits).
-- It automatically handles, &lt;b&gt;racket style exit-naming.
+- It automatically handles &lt;b&gt;racket style exit-naming.
 
 *Quickbuild* is a very simple Ruby script: It has no dependencies, and can be
 run on any Ruby 1.9.3 or higher without installing gems or libraries.  It
