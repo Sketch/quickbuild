@@ -169,7 +169,7 @@ def process_file(fileobj, parser)
 	commands = []
 	while (line = fileobj.gets) do
 		extras[:linenumber] += 1
-		state, result = parser.invoke(line, extras)
+		_state, result = parser.invoke(line, extras)
 		result.each {|stateresults|
 			stateresults.each {|opcode|
 				commands.push({:location => {:file => fileobj.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
