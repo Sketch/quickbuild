@@ -54,7 +54,7 @@ class SimpleAction
 		end
 	end
 	def invoke(state, input, extra = nil)
-		userfun = 'state_'.concat(getstate(state).to_s).intern
+		userfun = ('state_' + (getstate(state).to_s)).intern
 		func = nil
 		func ||= (respond_to?(userfun) && method(userfun))
 		func ||= (respond_to?(:unhandled_call) && method(:unhandled_call))
@@ -67,7 +67,7 @@ class SimpleAction
 	end
 	def + (a)
 		raise TypeError, "Expected array, got #{a.class}" if a.class != Array
-		self.define_singleton_method('state_'.concat(getstate(a[0]).to_s), a[1])
+		self.define_singleton_method('state_' + (getstate(a[0]).to_s), a[1])
 		return self
 	end
 end
