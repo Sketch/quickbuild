@@ -196,7 +196,7 @@ end
 # Don't rely on these functions producing consistent
 # output between versions of quickbuild!
 BADATTR_ORDS = [34, 37, 40, 41, 42, 44, 58, 59, 91, 92, 93, 94, 123, 124, 125]
-BADATTR_CHARS = (BADATTR_ORDS.map {|x| x.chr(Encoding::ASCII) }) + [' ']
+BADATTR_CHARS = (BADATTR_ORDS.map {|x| x.chr() }) + [' ']
 BADATTR_REPLACE = (BADATTR_ORDS.map {|x| '$' + x.to_s(16) }) + ['_']
 BADATTR_REGEXP = Regexp.union(BADATTR_CHARS)
 BADATTR_HASH = Hash[BADATTR_CHARS.zip(BADATTR_REPLACE)]
