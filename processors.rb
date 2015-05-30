@@ -164,15 +164,23 @@ SYNTAXP.push Action.new(/^.+$/,
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
 
-def process_file(fileobj, parser)
+def process_file(input, parser)
 	extras = {:linenumber => 0}
 	commands = []
-	while (line = fileobj.gets) do
+
+	if input.respond_to?(:shift)
+		getter = input.method(:shift)
+		fake_path = 'StringArray'
+	else
+		getter = input.method(:gets)
+	end
+
+	while (line = getter.call) do
 		extras[:linenumber] += 1
 		_state, result = parser.invoke(line, extras)
 		result.each {|stateresults|
 			stateresults.each {|opcode|
-				commands.push({:location => {:file => fileobj.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
+				commands.push({:location => {:file => fake_path || input.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
 			}
 		}
 	end
