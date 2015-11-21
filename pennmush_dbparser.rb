@@ -43,7 +43,6 @@ module PennMUSHDBParser
   end
 
   def self.namify_exit(link, table)
-    puts table
     {:name        => link[:name],
      :source      => table[link[:source]][:name],
      :destination => table[link[:destination]][:name],
