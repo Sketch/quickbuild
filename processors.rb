@@ -219,7 +219,7 @@ def id_to_name(id)
 end
 
 def aliasify(given_name, alias_list = [])
-	name, semicolon, given_aliases = given_name.partition(';')
+	name, _semicolon, given_aliases = given_name.partition(';')
 	aliased_word, aliased_name = nil, name
 	autobracket = false
 	if /<\S+>/ !~ name && autobracket then # Not pre-bracketed
@@ -352,8 +352,6 @@ end
 
 # Take an opcode array and output a graph.
 def process_opcodes(opcode_array, options = {})
-	nodelist = []
-	edgelist = []
 	stateobj = {
 		:location => nil,
 		:attr_base => "ROOM.",
