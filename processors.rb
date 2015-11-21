@@ -161,7 +161,7 @@ SYNTAXP.push ActionWIND.new(/^DESC(?:RIBE)?\s+(".*?"(?:[^=->\s]\S*)?)\s*=\s*(.*)
 	[:default, lambda {|s,i,e| [s, [[:BUFFER_ROOM, e[:matchdata][1], "\n@describe here=" + e[:matchdata][2]]] ]}] )
 
 SYNTAXP.push Action.new(/^.+$/,
-	[:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command."]] ]}],
+	[:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command: #{e[:matchdata][0]}"]] ]}],
 	[:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
