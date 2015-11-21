@@ -1,5 +1,7 @@
 require_relative 'statemachine'
 
+VERSION='2.10'
+
 # Section: Input file parser
 class Action < SimpleAction
 	def unhandled_call(state, input, extra)

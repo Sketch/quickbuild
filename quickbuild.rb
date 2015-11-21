@@ -31,8 +31,6 @@
 # ENDON
 #
 
-VERSION='2.10'
-
 require 'optparse'
 require_relative 'processors'
 
