@@ -1,7 +1,15 @@
 require 'minitest/autorun'
 require 'set'
 require 'socket'
+require 'stringio'
 require_relative 'pennmush_dbparser'
+require_relative 'processors'
+
+class LocatedStringIO < StringIO
+  def path
+    "QuickbuildTest"
+  end
+end
 
 class AcceptanceTests < MiniTest::Unit::TestCase
 
@@ -120,7 +128,11 @@ class AcceptanceTests < MiniTest::Unit::TestCase
 
   def construct_and_send_grid(quickbuild_string)
     debug "Constructing Grid"
-    # Call quickbuild directly with quickbuild string, pipe into pennmush_send
+    file = LocatedStringIO.new(quickbuild_string)
+    commandlist = process_file(file, SYNTAXP)
+    graph = process_opcodes(commandlist, {})
+    softcode = process_graph(graph, {})
+    pennmush_send(softcode.join("\n"))
   end
 
   def room(name, features = {})
@@ -137,9 +149,9 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     link "Higher", "Red Room", "Blue Room"
     link "Lower", "Blue Room", "Red Room"
 
-    construct_and_send_grid(<<EOS
-    "Higher" : "Red Room"  -> "Blue Room"
-    "Lower"  : "Blue Room" -> "Red Room"
+    construct_and_send_grid(<<-EOS.gsub(/^\s+/, '')
+      "Higher" : "Red Room"  -> "Blue Room"
+      "Lower"  : "Blue Room" -> "Red Room"
 EOS
     )
 
