@@ -164,15 +164,23 @@ SYNTAXP.push Action.new(/^.+$/,
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
 
-def process_file(fileobj, parser)
+def process_file(input, parser)
 	extras = {:linenumber => 0}
 	commands = []
-	while (line = fileobj.gets) do
+
+	if input.respond_to?(:shift)
+		getter = input.method(:shift)
+		fake_path = 'StringArray'
+	else
+		getter = input.method(:gets)
+	end
+
+	while (line = getter.call) do
 		extras[:linenumber] += 1
-		state, result = parser.invoke(line, extras)
+		_state, result = parser.invoke(line, extras)
 		result.each {|stateresults|
 			stateresults.each {|opcode|
-				commands.push({:location => {:file => fileobj.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
+				commands.push({:location => {:file => fake_path || input.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
 			}
 		}
 	end
@@ -196,7 +204,7 @@ end
 # Don't rely on these functions producing consistent
 # output between versions of quickbuild!
 BADATTR_ORDS = [34, 37, 40, 41, 42, 44, 58, 59, 91, 92, 93, 94, 123, 124, 125]
-BADATTR_CHARS = (BADATTR_ORDS.map {|x| x.chr(Encoding::ASCII) }) + [' ']
+BADATTR_CHARS = (BADATTR_ORDS.map {|x| x.chr() }) + [' ']
 BADATTR_REPLACE = (BADATTR_ORDS.map {|x| '$' + x.to_s(16) }) + ['_']
 BADATTR_REGEXP = Regexp.union(BADATTR_CHARS)
 BADATTR_HASH = Hash[BADATTR_CHARS.zip(BADATTR_REPLACE)]
