@@ -29,9 +29,15 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   end
 
   def pennmush_shutdown
-    pennmush_send('@shutdown')
-    loop until File.exist?(File.join(%w[test-pennmush game data outdb]))
-    loop until File.readlines(File.join(%w[test-pennmush game data outdb])).last.chomp == '***END OF DUMP***'
+    if File.exist?(File.join(%w[test-pennmush game netmush.pid]))
+      debug "Shutting down running PennMUSH."
+      pid = File.read(File.join(%w[test-pennmush game netmush.pid])).to_i
+      Process.kill("INT", pid)
+      debug "Waiting for database file to exist."
+      loop until File.exist?(File.join(%w[test-pennmush game data outdb]))
+      debug "Waiting for end of dump."
+      loop until File.readlines(File.join(%w[test-pennmush game data outdb])).last.chomp == '***END OF DUMP***'
+    end
     @pennsocket = nil
   end
 
@@ -106,6 +112,10 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     pennmush_send("connect #1")
     @rooms = Set.new()
     @exits = Set.new()
+  end
+
+  def teardown
+    pennmush_shutdown
   end
 
   def construct_and_send_grid(quickbuild_string)
