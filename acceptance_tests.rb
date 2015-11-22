@@ -17,8 +17,12 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     system(array.join(' && '))
   end
 
-  def pennmush_filename
+  def pennmush_outdb
     File.join(%w[test-pennmush game data outdb])
+  end
+
+  def pennmush_pidfile
+    File.join(%w[test-pennmush game netmush.pid])
   end
 
   def pennmush_install
@@ -37,14 +41,14 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   end
 
   def pennmush_shutdown
-    if File.exist?(File.join(%w[test-pennmush game netmush.pid]))
+    if File.exist?(pennmush_pidfile)
       debug "Shutting down running PennMUSH."
-      pid = File.read(File.join(%w[test-pennmush game netmush.pid])).to_i
+      pid = File.read(pennmush_pidfile).to_i
       Process.kill("INT", pid)
       debug "Waiting for database file to exist."
-      loop until File.exist?(File.join(%w[test-pennmush game data outdb]))
+      loop until File.exist?(pennmush_outdb)
       debug "Waiting for end of dump."
-      loop until File.readlines(File.join(%w[test-pennmush game data outdb])).last.chomp == '***END OF DUMP***'
+      loop until File.readlines(pennmush_outdb).last.chomp == '***END OF DUMP***'
     end
     @pennsocket = nil
   end
@@ -53,9 +57,9 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     debug "Sending @dump"
     pennmush_send('@dump')
     debug "Waiting for database file to exist."
-    loop until File.exist?(File.join(%w[test-pennmush game data outdb]))
+    loop until File.exist?(pennmush_outdb)
     debug "Waiting for end of dump."
-    loop until File.readlines(File.join(%w[test-pennmush game data outdb])).last.chomp == '***END OF DUMP***'
+    loop until File.readlines(pennmush_outdb).last.chomp == '***END OF DUMP***'
   end
 
   def pennmush_send(string)
@@ -79,8 +83,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   end
 
   def pennmush_startup
-    datafile = File.join(%w[test-pennmush game data outdb])
-    File.delete(datafile) if File.exist?(datafile)
+    File.delete(pennmush_outdb) if File.exist?(pennmush_outdb)
     sysdo([
       'cd ' + File.join(%w[test-pennmush game]),
       './restart',
@@ -101,9 +104,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   end
 
   def pennmush_dbread
-    PennMUSHDBParser.parse_file(
-      File.join(%w[test-pennmush game data outdb])
-    )
+    PennMUSHDBParser.parse_file(pennmush_outdb)
   end
 
   def pennmush_test(rooms, exits)
