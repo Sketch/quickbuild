@@ -1,15 +1,8 @@
 require 'minitest/autorun'
 require 'set'
 require 'socket'
-require 'stringio'
 require_relative 'pennmush_dbparser'
 require_relative 'processors'
-
-class LocatedStringIO < StringIO
-  def path
-    "QuickbuildTest"
-  end
-end
 
 class AcceptanceTests < MiniTest::Unit::TestCase
 
