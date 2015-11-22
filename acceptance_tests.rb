@@ -40,15 +40,19 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     ])
   end
 
+  def pennmush_wait_for_dbfile
+      debug "Waiting for database file to exist."
+      loop until File.exist?(pennmush_outdb)
+      debug "Waiting for end of dump."
+      loop until File.readlines(pennmush_outdb).last.chomp == '***END OF DUMP***'
+  end
+
   def pennmush_shutdown
     if File.exist?(pennmush_pidfile)
       debug "Shutting down running PennMUSH."
       pid = File.read(pennmush_pidfile).to_i
       Process.kill("INT", pid)
-      debug "Waiting for database file to exist."
-      loop until File.exist?(pennmush_outdb)
-      debug "Waiting for end of dump."
-      loop until File.readlines(pennmush_outdb).last.chomp == '***END OF DUMP***'
+      pennmush_wait_for_dbfile
     end
     @pennsocket = nil
   end
@@ -56,10 +60,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   def pennmush_dump
     debug "Sending @dump"
     pennmush_send('@dump')
-    debug "Waiting for database file to exist."
-    loop until File.exist?(pennmush_outdb)
-    debug "Waiting for end of dump."
-    loop until File.readlines(pennmush_outdb).last.chomp == '***END OF DUMP***'
+    pennmush_wait_for_dbfile
   end
 
   def pennmush_send(string)
