@@ -128,8 +128,8 @@ class AcceptanceTests < MiniTest::Unit::TestCase
 
   def construct_and_send_grid(quickbuild_string)
     debug "Constructing Grid"
-    file = LocatedStringIO.new(quickbuild_string)
-    commandlist = process_file(file, SYNTAXP)
+    quickbuild_string_array = quickbuild_string.split("\n").map(&:strip)
+    commandlist = process_file(quickbuild_string_array, SYNTAXP)
     graph = process_opcodes(commandlist, {})
     softcode = process_graph(graph, {})
     pennmush_send(softcode.join("\n"))
@@ -149,7 +149,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     link "Higher", "Red Room", "Blue Room"
     link "Lower", "Blue Room", "Red Room"
 
-    construct_and_send_grid(<<-EOS.gsub(/^\s+/, '')
+    construct_and_send_grid(<<-EOS
       "Higher" : "Red Room"  -> "Blue Room"
       "Lower"  : "Blue Room" -> "Red Room"
 EOS
