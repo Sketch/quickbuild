@@ -8,6 +8,10 @@ class PennMUSHController
     File.join(%w[test-pennmush game data outdb])
   end
 
+  def indb
+    File.join(%w[test-pennmush game data indb])
+  end
+
   def pidfile
     File.join(%w[test-pennmush game netmush.pid])
   end
@@ -35,13 +39,18 @@ class PennMUSHController
       loop until File.readlines(outdb).last.chomp == '***END OF DUMP***'
   end
 
-  public def shutdown
+  public def shutdown_and_destroy
     if File.exist?(pidfile)
       debug "Shutting down running PennMUSH."
       pid = File.read(pidfile).to_i
       Process.kill("INT", pid)
       wait_for_dbfile
     end
+    File.delete(outdb) if File.exist?(outdb)
+    File.delete(indb) if File.exist?(indb)
+    Dir.glob(File.join(%w[test-pennmush game save [^.]*])) {|filename|
+      File.delete(filename)
+    }
     @pennsocket = nil
   end
 

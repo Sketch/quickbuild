@@ -10,6 +10,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   def setup
     @pennmush = PennMUSHController.new()
     @pennmush.install
+    @pennmush.shutdown_and_destroy
     @pennmush.startup
     @pennmush.send("connect #1")
     @rooms = Set.new()
@@ -17,7 +18,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   end
 
   def teardown
-    @pennmush.shutdown
+    @pennmush.shutdown_and_destroy
   end
 
   def construct_and_send_grid(quickbuild_string)
@@ -45,6 +46,34 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     construct_and_send_grid(<<-EOS
       "Higher" : "Red Room"  -> "Blue Room"
       "Lower"  : "Blue Room" -> "Red Room"
+EOS
+    )
+
+    @pennmush.dump
+    db = @pennmush.dbparse
+    assert_equal @rooms, db[:rooms]
+    assert_equal @exits, db[:exits]
+  end
+
+  def test_C_shape
+    room "Blue NW"
+    room "Green N"
+    room "Yellow NE"
+    room "Indigo W"
+    room "Purple SW"
+    room "Red S"
+    room "Infrared SE"
+    link "e", "Blue NW", "Green N"
+    link "e", "Green N", "Yellow NE"
+    link "s", "Blue NW", "Indigo W"
+    link "s", "Indigo W", "Purple SW"
+    link "e", "Purple SW", "Red S"
+    link "e", "Red S", "Infrared SE"
+
+    construct_and_send_grid(<<-EOS
+      "e" : "Blue NW" -> "Green N" -> "Yellow NE"
+      "s" : "Blue NW" -> "Indigo W" -> "Purple SW"
+      "e" : "Purple SW" -> "Red S" -> "Infrared SE"
 EOS
     )
 
