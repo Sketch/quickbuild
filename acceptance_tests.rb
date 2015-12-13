@@ -43,11 +43,10 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     link "Higher", "Red Room", "Blue Room"
     link "Lower", "Blue Room", "Red Room"
 
-    construct_and_send_grid(<<-EOS
+    construct_and_send_grid <<-EOS
       "Higher" : "Red Room"  -> "Blue Room"
       "Lower"  : "Blue Room" -> "Red Room"
 EOS
-    )
 
     @pennmush.dump
     db = @pennmush.dbparse
@@ -70,12 +69,11 @@ EOS
     link "e", "Purple SW", "Red S"
     link "e", "Red S", "Infrared SE"
 
-    construct_and_send_grid(<<-EOS
+    construct_and_send_grid <<-EOS
       "e" : "Blue NW" -> "Green N" -> "Yellow NE"
       "s" : "Blue NW" -> "Indigo W" -> "Purple SW"
       "e" : "Purple SW" -> "Red S" -> "Infrared SE"
 EOS
-    )
 
     @pennmush.dump
     db = @pennmush.dbparse
