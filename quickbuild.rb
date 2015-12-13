@@ -109,23 +109,14 @@ end
 commandlist = []
 
 if options[:configfilename] then
-	case options[:configfilename] # Notice we don't call ".class()"!
-	when String
-		File.open(options[:configfilename], 'r') {|f|
-			commandlist += process_file(f)
-		}
-	when Array
-		possible = options[:configfilename].select {|f|
-			File.exist?(f) && ! File.directory?(f)
-		}
-		if possible != [] then
-			File.open(possible[0], 'r') {|f|
-				commandlist += process_file(f)
-			}
-		end
-	when NilClass
-		# Do nothing
-	end
+  [options[:configfilename]].
+    flatten.
+    select {|f| File.exist?(f) && ! File.directory?(f) }.
+    each do |f|
+      File.open(f, 'r') {|fobj|
+        commandlist += process_file(fobj)
+      }
+    end
 end
 
 commandlist += process_file(ARGF)
