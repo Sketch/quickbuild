@@ -106,10 +106,9 @@ if options[:debug] then
 end
 
 
-filelist = [options[:configfilename]].
+filelist = [options[:configfilename], ARGV].
     flatten.
     select {|f| File.exist?(f) && ! File.directory?(f) }
-filelist += ARGV
 
 commandlist =
   filelist.flat_map{|filename|
