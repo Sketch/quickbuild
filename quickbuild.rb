@@ -106,20 +106,17 @@ if options[:debug] then
 end
 
 
-commandlist = []
-
-if options[:configfilename] then
-  [options[:configfilename]].
+filelist = [options[:configfilename]].
     flatten.
-    select {|f| File.exist?(f) && ! File.directory?(f) }.
-    each do |f|
-      File.open(f, 'r') {|fobj|
-        commandlist += process_file(fobj)
-      }
-    end
-end
+    select {|f| File.exist?(f) && ! File.directory?(f) }
+filelist += ARGV
 
-commandlist += process_file(ARGF)
+commandlist =
+  filelist.flat_map{|filename|
+    File.open(filename, 'r') {|f|
+      process_file(f)
+    }
+  }
 
 if options[:debug] then
    commandlist.each {|cmd| puts "#{cmd}" }
