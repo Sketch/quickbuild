@@ -23,7 +23,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
 
   def construct_and_send_grid(quickbuild_string)
     quickbuild_string_array = quickbuild_string.split("\n").map(&:strip)
-    commandlist = process_file(quickbuild_string_array, SYNTAXP)
+    commandlist = process_file(quickbuild_string_array)
     graph = process_opcodes(commandlist, {})
     softcode = process_graph(graph, {})
     @pennmush.send(softcode.join("\n"))

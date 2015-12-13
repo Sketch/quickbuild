@@ -112,7 +112,7 @@ if options[:configfilename] then
 	case options[:configfilename] # Notice we don't call ".class()"!
 	when String
 		File.open(options[:configfilename], 'r') {|f|
-			commandlist += process_file(f, SYNTAXP)
+			commandlist += process_file(f)
 		}
 	when Array
 		possible = options[:configfilename].select {|f|
@@ -120,7 +120,7 @@ if options[:configfilename] then
 		}
 		if possible != [] then
 			File.open(possible[0], 'r') {|f|
-				commandlist += process_file(f, SYNTAXP)
+				commandlist += process_file(f)
 			}
 		end
 	when NilClass
@@ -128,7 +128,7 @@ if options[:configfilename] then
 	end
 end
 
-commandlist += process_file(ARGF,SYNTAXP)
+commandlist += process_file(ARGF)
 
 if options[:debug] then
    commandlist.each {|cmd| puts "#{cmd}" }

@@ -166,7 +166,8 @@ SYNTAXP.push Action.new(/^.+$/,
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
 
-def process_file(input, parser)
+def process_file(input)
+  parser = SYNTAXP
 	extras = {:linenumber => 0}
 	commands = []
 
