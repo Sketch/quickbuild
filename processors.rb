@@ -1,6 +1,6 @@
 require_relative 'statemachine'
 
-VERSION='2.10'
+VERSION='2.20'
 
 # Section: Input file parser
 class Action < SimpleAction
@@ -166,24 +166,17 @@ SYNTAXP.push Action.new(/^.+$/,
 	[:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
 
-def process_file(input)
+def process_file(file)
   parser = SYNTAXP
 	extras = {:linenumber => 0}
 	commands = []
 
-	if input.respond_to?(:shift)
-		getter = input.method(:shift)
-		fake_path = 'StringArray'
-	else
-		getter = input.method(:gets)
-	end
-
-	while (line = getter.call) do
+	file.each_line do |line|
 		extras[:linenumber] += 1
 		_state, result = parser.invoke(line, extras)
 		result.each {|stateresults|
 			stateresults.each {|opcode|
-				commands.push({:location => {:file => fake_path || input.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
+				commands.push({:location => {:file => file.path, :linenumber => extras[:linenumber]}, :opcode => opcode})
 			}
 		}
 	end
@@ -726,5 +719,11 @@ def process_graph(graph, options = {})
 	}
 
 	return output
+end
+
+def process_file_list_into_softcode(file_list, options={})
+  commandlist = file_list.flat_map{|file| process_file(file) }
+  graph = process_opcodes(commandlist, options)
+  process_graph(graph, options)
 end
 

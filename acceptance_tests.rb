@@ -2,6 +2,7 @@
 require 'minitest/autorun'
 require 'set'
 require 'socket'
+require 'tempfile'
 require_relative 'pennmush_dbparser'
 require_relative 'processors'
 require_relative 'acceptance_tests_pennmush'
@@ -23,10 +24,12 @@ class AcceptanceTests < MiniTest::Unit::TestCase
 
   def construct_and_send_grid(quickbuild_string)
     quickbuild_string_array = quickbuild_string.split("\n").map(&:strip)
-    commandlist = process_file(quickbuild_string_array)
-    graph = process_opcodes(commandlist, {})
-    softcode = process_graph(graph, {})
-    @pennmush.send(softcode.join("\n"))
+    Tempfile.open('quickbuild_tests') do |file|
+      file.write(quickbuild_string_array.join("\n"))
+      file.rewind
+      softcode = process_file_list_into_softcode([file])
+      @pennmush.send(softcode.join("\n"))
+    end
   end
 
   def room(name, features = {})

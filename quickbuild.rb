@@ -108,19 +108,7 @@ end
 
 filelist = [options[:configfilename], ARGV].
     flatten.
-    select {|f| File.exist?(f) && ! File.directory?(f) }
+    select {|f| File.exist?(f) && ! File.directory?(f) }.
+    map {|f| File.open(f, 'r') }
 
-commandlist =
-  filelist.flat_map{|filename|
-    File.open(filename, 'r') {|f|
-      process_file(f)
-    }
-  }
-
-if options[:debug] then
-   commandlist.each {|cmd| puts "#{cmd}" }
-end
-
-graph = process_opcodes(commandlist, options)
-softcode = process_graph(graph, options)
-puts(softcode)
+puts process_file_list_into_softcode(filelist, options)
