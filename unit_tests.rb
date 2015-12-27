@@ -68,4 +68,21 @@ EOS
     assert_equal expected, output
   end
 
+  def test_command_reverse
+    opcode = [:REVERSE, '"Ana"', '"Kata"']
+
+    fakefile = make_fakefile <<-EOS
+      REVERSE "Ana" "Kata"
+EOS
+
+    expected = [
+      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
+    ]
+
+    output = process_file(fakefile)
+
+    assert_equal expected, output
+  end
+
+
 end
