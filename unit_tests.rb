@@ -84,5 +84,24 @@ EOS
     assert_equal expected, output
   end
 
+  def test_command_on
+    opcode = [:BUFFER_ROOM, '"Golden Land"', "\n@describe here=A beautiful place."]
+
+    fakefile = make_fakefile <<-EOS
+      IN "Golden Land"
+      @describe here=A beautiful place.
+      ENDIN
+EOS
+
+    expected = [
+      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => [:NOP]},
+      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode},
+      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => [:NOP]}
+    ]
+
+    output = process_file(fakefile)
+
+    assert_equal expected, output
+  end
 
 end
