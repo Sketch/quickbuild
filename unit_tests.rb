@@ -36,6 +36,22 @@ EOS
     assert_equal expected, output
   end
 
+  def test_command_room_parent_reset
+    opcode = [:ROOM_PARENT, nil, nil]
+
+    fakefile = make_fakefile <<-EOS
+      ROOM PARENT:
+EOS
+
+    expected = [
+      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
+    ]
+
+    output = process_file(fakefile)
+
+    assert_equal expected, output
+  end
+
   def test_command_room_parent_raw
     opcode = [:ROOM_PARENT, '#4', :raw]
 
