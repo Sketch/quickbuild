@@ -21,10 +21,10 @@ class UnitTests < MiniTest::Unit::TestCase
 
   def assert_output(instruction_array, string)
     fakefile = make_fakefile(string)
+    output = process_file(fakefile)
     expected = instruction_array.map {|opcode|
       {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
     }
-    output = process_file(fakefile)
     assert_equal expected, output
   end
 
