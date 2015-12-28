@@ -19,105 +19,46 @@ class UnitTests < MiniTest::Unit::TestCase
     FakeFile.new(lines.gsub(/^\s+/, ''))
   end
 
-  def test_invalid_command
-    bogusness = "ZOP BOB B-DOWOP BEZAM BAM BOOM"
-    opcode = [:ERROR, "Unrecognized command: #{bogusness}"]
-
-    fakefile = make_fakefile <<-EOS
-      #{bogusness}
-EOS
-
-    expected = [
+  def assert_output(instruction_array, string)
+    fakefile = make_fakefile(string)
+    expected = instruction_array.map {|opcode|
       {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
-    ]
-
+    }
     output = process_file(fakefile)
-
     assert_equal expected, output
+  end
+
+  def test_invalid_command
+    bogusness = 'ZOP BOB B-DOWOP BEZAM BAM BOOM'
+    assert_output [[:ERROR, "Unrecognized command: #{bogusness}"]], "#{bogusness}"
   end
 
   def test_command_room_parent_reset
-    opcode = [:ROOM_PARENT, nil, nil]
-
-    fakefile = make_fakefile <<-EOS
-      ROOM PARENT:
-EOS
-
-    expected = [
-      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
-    ]
-
-    output = process_file(fakefile)
-
-    assert_equal expected, output
+    assert_output [[:ROOM_PARENT, nil, nil]], 'ROOM PARENT:'
   end
 
   def test_command_room_parent_raw
-    opcode = [:ROOM_PARENT, '#4', :raw]
-
-    fakefile = make_fakefile <<-EOS
-      ROOM PARENT: #4
-EOS
-
-    expected = [
-      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
-    ]
-
-    output = process_file(fakefile)
-
-    assert_equal expected, output
+    assert_output [[:ROOM_PARENT, '#4', :raw]], 'ROOM PARENT: #4'
   end
 
   def test_command_room_parent_id
-    opcode = [:ROOM_PARENT, '"Orchard"', :id]
-
-    fakefile = make_fakefile <<-EOS
-      ROOM PARENT: "Orchard"
-EOS
-
-    expected = [
-      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
-    ]
-
-    output = process_file(fakefile)
-
-    assert_equal expected, output
+    assert_output [[:ROOM_PARENT, '"Orchard"', :id]], 'ROOM PARENT: "Orchard"'
   end
 
   def test_command_reverse
-    opcode = [:REVERSE, '"Ana"', '"Kata"']
-
-    fakefile = make_fakefile <<-EOS
-      REVERSE "Ana" "Kata"
-EOS
-
-    expected = [
-      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode}
-    ]
-
-    output = process_file(fakefile)
-
-    assert_equal expected, output
+    assert_output [[:REVERSE, '"Ana"', '"Kata"']], 'REVERSE "Ana" "Kata"'
   end
 
   def test_command_on
-    opcode = [:BUFFER_ROOM, '"Golden Land"', "\n@describe here=A beautiful place."]
-
-    fakefile = make_fakefile <<-EOS
+    assert_output [
+      [:NOP],
+      [:BUFFER_ROOM, '"Golden Land"', "\n@describe here=A beautiful place."],
+      [:NOP]
+    ], <<-EOS
       IN "Golden Land"
       @describe here=A beautiful place.
       ENDIN
 EOS
-
-    expected = [
-      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => [:NOP]},
-      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => opcode},
-      {:location => {:file => fakefile.path, :linenumber => @incrementer.next}, :opcode => [:NOP]}
-    ]
-
-    output = process_file(fakefile)
-
-    assert_equal expected, output
   end
 
 end
