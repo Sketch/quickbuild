@@ -115,6 +115,12 @@ class UnitTests < MiniTest::Unit::TestCase
     assert_output [[:EXIT_FLAGS, str]], "EXIT FLAGS: #{str}"
   end
 
+  def test_command_describe
+    str1 = "Serene Town"
+    str2 = "A peaceful place"
+    assert_output [[:BUFFER_ROOM, "\"#{str1}\"", "\n@describe here=\"#{str2}\""]], "DESCRIBE \"#{str1}\"=\"#{str2}\""
+  end
+
   def test_command_on
     assert_output [
       [:NOP],
