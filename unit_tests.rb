@@ -158,6 +158,35 @@ EOS
 EOS
   end
 
+  def test_command_in_with_comment
+    assert_output [
+      [:NOP],
+      [:BUFFER_ROOM, '"Emerald Pillar"', "\n@describe here=A tower of carved emerald."],
+      [:BUFFER_ROOM, '"Emerald Pillar"', "\n# Uh-oh."],
+      [:NOP]
+    ], <<-EOS
+      IN "Emerald Pillar"
+      @describe here=A tower of carved emerald.
+      # Uh-oh.
+      ENDIN
+EOS
+  end
+
+  def test_command_on
+    assert_output [
+      [:NOP],
+      [:BUFFER_EXIT, '"Galaxy Gateway"', '"Portal 5"', "\n@describe here=The stars are calling!"],
+      [:BUFFER_EXIT, '"Galaxy Gateway"', '"Portal 5"', "\n# Oh no!"],
+      [:NOP]
+    ], <<-EOS
+      ON "Portal 5" FROM "Galaxy Gateway"
+      @describe here=The stars are calling!
+      # Oh no!
+      ENDON
+EOS
+  end
+
+
   # TODO:
   #  Test one-way construction directive
   #  Test two-way construction directive after REVERSE
@@ -165,6 +194,4 @@ EOS
   #  Test ENDON outside ON block
   #  Test ENDIN inside ON block
   #  Test ENDON inside IN block
-  #  Test #-comments in IN block
-  #  Test #-comments in ON block
 end
