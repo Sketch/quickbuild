@@ -146,15 +146,25 @@ class UnitTests < MiniTest::Unit::TestCase
 EOS
   end
 
+  def test_command_on
+    assert_output [
+      [:NOP],
+      [:BUFFER_EXIT, '"Ashen Land"', '"Palace"', "\n@describe here=A wonderous place."],
+      [:NOP]
+    ], <<-EOS
+      ON "Palace" FROM "Ashen Land"
+      @describe here=A wonderous place.
+      ENDON
+EOS
+  end
+
   # TODO:
   #  Test one-way construction directive
   #  Test two-way construction directive after REVERSE
-  #  Test IN directive
   #  Test ENDIN outside IN block
   #  Test ENDON outside ON block
   #  Test ENDIN inside ON block
   #  Test ENDON inside IN block
-  #  Test #-comments
   #  Test #-comments in IN block
   #  Test #-comments in ON block
 end
