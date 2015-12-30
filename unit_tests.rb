@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+require 'byebug'
 require 'minitest/autorun'
 require 'stringio'
 require_relative 'processors'
