@@ -17,7 +17,7 @@ class UnitTests < MiniTest::Unit::TestCase
   end
 
   def make_fakefile(lines)
-    FakeFile.new(lines.gsub(/^\s+/, ''))
+    FakeFile.new(lines.gsub(/^ */, ''))
   end
 
   def assert_output(instruction_array, string)
@@ -32,6 +32,14 @@ class UnitTests < MiniTest::Unit::TestCase
   def test_invalid_command
     bogusness = 'ZOP BOB B-DOWOP BEZAM BAM BOOM'
     assert_output [[:ERROR, "Unrecognized command: #{bogusness}"]], "#{bogusness}"
+  end
+
+  def test_blank_line
+    assert_output [[:NOP]], "\n"
+  end
+
+  def test_whitespace_line
+    assert_output [[:NOP]], "\t "
   end
 
   def test_command_attr_base
