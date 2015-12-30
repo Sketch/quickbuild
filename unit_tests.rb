@@ -42,6 +42,10 @@ class UnitTests < MiniTest::Unit::TestCase
     assert_output [[:NOP]], "\t "
   end
 
+  def test_comment_line
+    assert_output [[:NOP]], "# Comment lines begin with a pound."
+  end
+
   def test_command_attr_base
     str = "juniper_town"
     assert_output [[:ATTR_BASE, str]], "ATTR BASE: #{str}"
