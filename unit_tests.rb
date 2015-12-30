@@ -134,7 +134,7 @@ class UnitTests < MiniTest::Unit::TestCase
     assert_output [[:BUFFER_ROOM, "\"#{str1}\"", "\n@describe here=\"#{str2}\""]], "DESCRIBE \"#{str1}\"=\"#{str2}\""
   end
 
-  def test_command_on
+  def test_command_in
     assert_output [
       [:NOP],
       [:BUFFER_ROOM, '"Golden Land"', "\n@describe here=A beautiful place."],
