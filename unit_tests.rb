@@ -187,7 +187,7 @@ EOS
   end
 
   def test_command_one_way_construction
-    @incrementer = [1,1,1,1,1,1].to_enum
+    @incrementer = [1,1,1].to_enum
     assert_output [
       [:CREATE_ROOM, '"In the Fire"'],
       [:CREATE_ROOM, '"Rising in Smoke"'],
@@ -196,7 +196,7 @@ EOS
   end
 
   def test_command_one_way_construction_extended
-    @incrementer = [1,1,1,1,1,1].to_enum
+    @incrementer = [1,1,1,1,1].to_enum
     assert_output [
       [:CREATE_ROOM, '"In the Fire"'],
       [:CREATE_ROOM, '"Rising in Smoke"'],
