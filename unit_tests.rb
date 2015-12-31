@@ -206,11 +206,33 @@ EOS
     ], '"burn" : "In the Fire" -> "Rising in Smoke" -> "Away in The Breeze"'
   end
 
+  def test_command_two_way_construction
+    @incrementer = [1,1,1,1].to_enum
+    assert_output [
+      [:CREATE_ROOM, '"Green Zone"'],
+      [:CREATE_ROOM, '"Blue Zone"'],
+      [:CREATE_EXIT, '"shorter"', '"Green Zone"', '"Blue Zone"'],
+      [:CREATE_REVERSE_EXIT, '"shorter"', '"Green Zone"', '"Blue Zone"'],
+    ], '"shorter" : "Green Zone" <-> "Blue Zone"'
+  end
+
+  def test_command_two_way_construction_extended
+    @incrementer = [1,1,1,1,1,1,1].to_enum
+    assert_output [
+      [:CREATE_ROOM, '"Green Zone"'],
+      [:CREATE_ROOM, '"Blue Zone"'],
+      [:CREATE_EXIT, '"shorter"', '"Green Zone"', '"Blue Zone"'],
+      [:CREATE_REVERSE_EXIT, '"shorter"', '"Green Zone"', '"Blue Zone"'],
+      [:CREATE_ROOM, '"Ultraviolet Zone"'],
+      [:CREATE_EXIT, '"shorter"', '"Blue Zone"', '"Ultraviolet Zone"'],
+      [:CREATE_REVERSE_EXIT, '"shorter"', '"Blue Zone"', '"Ultraviolet Zone"'],
+    ], '"shorter" : "Green Zone" <-> "Blue Zone" <-> "Ultraviolet Zone"'
+  end
 
   # TODO:
-  #  Test two-way construction directive after REVERSE
   #  Test ENDIN outside IN block
   #  Test ENDON outside ON block
   #  Test ENDIN inside ON block
   #  Test ENDON inside IN block
+  #  Add warning for using a REVERSE exit before its definition.
 end
