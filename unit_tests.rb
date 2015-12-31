@@ -260,3 +260,41 @@ EOS
   #  Add warning for using a REVERSE exit before its definition.
   #  Change invalid block ending directives to :ERROR
 end
+
+class MultilineTest < MiniTest::Unit::TestCase
+  include Directives
+
+  def make_fakefile(lines)
+    FakeFile.new(lines.gsub(/^ */, ''))
+  end
+
+  def assert_output(steps, output, input)
+    @stepping += steps.map {|step| @current_line + step}
+    @current_line = @stepping.last
+    @total_output += output
+    @total_input << input.chomp
+  end
+
+  def test_multiline
+    @current_line = 0
+    @total_output = []
+    @total_input = []
+    @stepping = []
+    method_syms = self.methods.select {|symbol| /^command_/ =~ symbol}
+    sample_syms = method_syms.sample(7)
+    methods = sample_syms.map {|sym| method(sym) }
+    methods.each(&:call)
+    assert_multiline(@stepping, @total_output, @total_input.join("\n"))
+  end
+
+  def assert_multiline(steps, instruction_array, string)
+    incrementer = steps.to_enum
+    fakefile = make_fakefile(string)
+    output = process_file(fakefile)
+    expected = instruction_array.map {|opcode|
+      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
+    }
+    assert_equal expected, output
+  end
+
+end
