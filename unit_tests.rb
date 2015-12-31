@@ -31,6 +31,14 @@ class UnitTests < MiniTest::Unit::TestCase
     assert_output [1], [[:ERROR, "Unrecognized command: #{bogusness}"]], "#{bogusness}"
   end
 
+  def test_invalid_endin_outside_in_block
+    assert_output [1], [[:ERROR, 'ENDIN outside of IN-block.']], 'ENDIN'
+  end
+
+  def test_invalid_endon_outside_on_block
+    assert_output [1], [[:ERROR, 'ENDON outside of ON-block.']], 'ENDON'
+  end
+
   def test_blank_line
     assert_output [1], [[:NOP]], "\n"
   end
@@ -223,8 +231,6 @@ EOS
   end
 
   # TODO:
-  #  Test ENDIN outside IN block
-  #  Test ENDON outside ON block
   #  Test ENDIN inside ON block
   #  Test ENDON inside IN block
   #  Add warning for using a REVERSE exit before its definition.
