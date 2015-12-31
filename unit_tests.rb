@@ -10,62 +10,7 @@ class FakeFile < StringIO
   end
 end
 
-class UnitTests < MiniTest::Unit::TestCase
-
-  def make_fakefile(lines)
-    FakeFile.new(lines.gsub(/^ */, ''))
-  end
-
-  def assert_output(steps, instruction_array, string)
-    incrementer = steps.to_enum
-    fakefile = make_fakefile(string)
-    output = process_file(fakefile)
-    expected = instruction_array.map {|opcode|
-      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
-    }
-    assert_equal expected, output
-  end
-
-  def test_invalid_command
-    bogusness = 'ZOP BOB B-DOWOP BEZAM BAM BOOM'
-    assert_output [1], [[:ERROR, "Unrecognized command: #{bogusness}"]], "#{bogusness}"
-  end
-
-  def test_invalid_endin_outside_in_block
-    assert_output [1], [[:ERROR, 'ENDIN outside of IN-block.']], 'ENDIN'
-  end
-
-  def test_invalid_endon_outside_on_block
-    assert_output [1], [[:ERROR, 'ENDON outside of ON-block.']], 'ENDON'
-  end
-
-  def test_invalid_endon_inside_in_block
-    assert_output [1,2], [
-      [:NOP],
-      [:WARNING, 'ENDON inside of IN-block.']
-    ], <<-EOS
-      IN "Desert"
-      ENDON
-EOS
-  end
-
-  def test_invalid_endin_inside_on_block
-    assert_output [1,2], [
-      [:NOP],
-      [:WARNING, 'ENDIN inside of ON-block.']
-    ], <<-EOS
-      ON "Accelerator" FROM "Tube Station"
-      ENDIN
-EOS
-  end
-
-  def test_blank_line
-    assert_output [1], [[:NOP]], "\n"
-  end
-
-  def test_whitespace_line
-    assert_output [1], [[:NOP]], "\t "
-  end
+module Directives
 
   def test_comment_line
     assert_output [1], [[:NOP]], "# Comment lines begin with a pound."
@@ -249,7 +194,67 @@ EOS
       [:CREATE_REVERSE_EXIT, '"shorter"', '"Blue Zone"', '"Ultraviolet Zone"'],
     ], '"shorter" : "Green Zone" <-> "Blue Zone" <-> "Ultraviolet Zone"'
   end
+end
+
+class UnitTests < MiniTest::Unit::TestCase
+  include Directives
+
+  def make_fakefile(lines)
+    FakeFile.new(lines.gsub(/^ */, ''))
+  end
+
+  def assert_output(steps, instruction_array, string)
+    incrementer = steps.to_enum
+    fakefile = make_fakefile(string)
+    output = process_file(fakefile)
+    expected = instruction_array.map {|opcode|
+      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
+    }
+    assert_equal expected, output
+  end
+
+  def test_invalid_command
+    bogusness = 'ZOP BOB B-DOWOP BEZAM BAM BOOM'
+    assert_output [1], [[:ERROR, "Unrecognized command: #{bogusness}"]], "#{bogusness}"
+  end
+
+  def test_invalid_endin_outside_in_block
+    assert_output [1], [[:ERROR, 'ENDIN outside of IN-block.']], 'ENDIN'
+  end
+
+  def test_invalid_endon_outside_on_block
+    assert_output [1], [[:ERROR, 'ENDON outside of ON-block.']], 'ENDON'
+  end
+
+  def test_invalid_endon_inside_in_block
+    assert_output [1,2], [
+      [:NOP],
+      [:WARNING, 'ENDON inside of IN-block.']
+    ], <<-EOS
+      IN "Desert"
+      ENDON
+EOS
+  end
+
+  def test_invalid_endin_inside_on_block
+    assert_output [1,2], [
+      [:NOP],
+      [:WARNING, 'ENDIN inside of ON-block.']
+    ], <<-EOS
+      ON "Accelerator" FROM "Tube Station"
+      ENDIN
+EOS
+  end
+
+  def test_blank_line
+    assert_output [1], [[:NOP]], "\n"
+  end
+
+  def test_whitespace_line
+    assert_output [1], [[:NOP]], "\t "
+  end
 
   # TODO:
   #  Add warning for using a REVERSE exit before its definition.
+  #  Change invalid block ending directives to :ERROR
 end
