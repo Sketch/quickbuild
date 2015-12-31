@@ -12,7 +12,7 @@ end
 
 module Directives
 
-  def test_comment_line
+  def test_command_comment_line
     assert_output [1], [[:NOP]], "# Comment lines begin with a pound."
   end
 
