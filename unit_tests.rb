@@ -231,7 +231,7 @@ class UnitTests < MiniTest::Unit::TestCase
   def test_invalid_endon_inside_in_block
     assert_output [1,2], [
       [:NOP],
-      [:WARNING, 'ENDON inside of IN-block.']
+      [:ERROR, 'ENDON inside of IN-block.']
     ], <<-EOS
       IN "Desert"
       ENDON
@@ -241,7 +241,7 @@ EOS
   def test_invalid_endin_inside_on_block
     assert_output [1,2], [
       [:NOP],
-      [:WARNING, 'ENDIN inside of ON-block.']
+      [:ERROR, 'ENDIN inside of ON-block.']
     ], <<-EOS
       ON "Accelerator" FROM "Tube Station"
       ENDIN
@@ -258,7 +258,6 @@ EOS
 
   # TODO:
   #  Add warning for using a REVERSE exit before its definition.
-  #  Change invalid block ending directives to :ERROR
 end
 
 class MultilineTest < MiniTest::Unit::TestCase
