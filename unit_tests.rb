@@ -186,9 +186,28 @@ EOS
 EOS
   end
 
+  def test_command_one_way_construction
+    @incrementer = [1,1,1,1,1,1].to_enum
+    assert_output [
+      [:CREATE_ROOM, '"In the Fire"'],
+      [:CREATE_ROOM, '"Rising in Smoke"'],
+      [:CREATE_EXIT, '"burn"', '"In the Fire"', '"Rising in Smoke"'],
+    ], '"burn" : "In the Fire" -> "Rising in Smoke"'
+  end
+
+  def test_command_one_way_construction_extended
+    @incrementer = [1,1,1,1,1,1].to_enum
+    assert_output [
+      [:CREATE_ROOM, '"In the Fire"'],
+      [:CREATE_ROOM, '"Rising in Smoke"'],
+      [:CREATE_EXIT, '"burn"', '"In the Fire"', '"Rising in Smoke"'],
+      [:CREATE_ROOM, '"Away in The Breeze"'],
+      [:CREATE_EXIT, '"burn"', '"Rising in Smoke"', '"Away in The Breeze"']
+    ], '"burn" : "In the Fire" -> "Rising in Smoke" -> "Away in The Breeze"'
+  end
+
 
   # TODO:
-  #  Test one-way construction directive
   #  Test two-way construction directive after REVERSE
   #  Test ENDIN outside IN block
   #  Test ENDON outside ON block
