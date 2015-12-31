@@ -39,6 +39,26 @@ class UnitTests < MiniTest::Unit::TestCase
     assert_output [1], [[:ERROR, 'ENDON outside of ON-block.']], 'ENDON'
   end
 
+  def test_invalid_endon_inside_in_block
+    assert_output [1,2], [
+      [:NOP],
+      [:WARNING, 'ENDON inside of IN-block.']
+    ], <<-EOS
+      IN "Desert"
+      ENDON
+EOS
+  end
+
+  def test_invalid_endin_inside_on_block
+    assert_output [1,2], [
+      [:NOP],
+      [:WARNING, 'ENDIN inside of ON-block.']
+    ], <<-EOS
+      ON "Accelerator" FROM "Tube Station"
+      ENDIN
+EOS
+  end
+
   def test_blank_line
     assert_output [1], [[:NOP]], "\n"
   end
@@ -231,7 +251,5 @@ EOS
   end
 
   # TODO:
-  #  Test ENDIN inside ON block
-  #  Test ENDON inside IN block
   #  Add warning for using a REVERSE exit before its definition.
 end

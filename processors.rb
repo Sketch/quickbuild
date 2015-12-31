@@ -153,12 +153,12 @@ class InputStateMachine
     @machine.push Action.new(/^ENDIN\s*$/,
       [:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
       [:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDIN outside of IN-block."]] ]}],
-      [:on,      lambda {|s,i,e| [:default, [[:WARNING, "ENDIN inside ON-block."]] ]}] )
+      [:on,      lambda {|s,i,e| [:default, [[:WARNING, "ENDIN inside of ON-block."]] ]}] )
 
     @machine.push Action.new(/^ENDON\s*$/,
       [:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
       [:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
-      [:in,      lambda {|s,i,e| [:default, [[:WARNING, "ENDON inside IN-block."]] ]}] )
+      [:in,      lambda {|s,i,e| [:default, [[:WARNING, "ENDON inside of IN-block."]] ]}] )
 
     @machine.push ActionWIND.new(/^DESC(?:RIBE)?\s+(".*?"(?:[^=->\s]\S*)?)\s*=\s*(.*)$/,
       [:default, lambda {|s,i,e| [s, [[:BUFFER_ROOM, e[:matchdata][1], "\n@describe here=" + e[:matchdata][2]]] ]}] )
