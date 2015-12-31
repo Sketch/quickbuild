@@ -11,100 +11,99 @@ class FakeFile < StringIO
 end
 
 module Directives
-
-  def test_command_comment_line
+  def command_comment_line
     assert_output [1], [[:NOP]], "# Comment lines begin with a pound."
   end
 
-  def test_command_attr_base
+  def command_attr_base
     str = "juniper_town"
     assert_output [1], [[:ATTR_BASE, str]], "ATTR BASE: #{str}"
   end
 
-  def test_command_alias
+  def command_alias
     str1 = "S"
     str2 = "South"
     assert_output [1], [[:ALIAS, "\"#{str1}\"", str2]], "ALIAS \"#{str1}\" \"#{str2}\""
   end
 
-  def test_command_reverse
+  def command_reverse
     assert_output [1], [[:REVERSE, '"Ana"', '"Kata"']], 'REVERSE "Ana" "Kata"'
   end
 
-  def test_command_room_parent_reset
+  def command_room_parent_reset
     assert_output [1], [[:ROOM_PARENT, nil, nil]], 'ROOM PARENT:'
   end
 
-  def test_command_room_parent_raw
+  def command_room_parent_raw
     assert_output [1], [[:ROOM_PARENT, '#4', :raw]], 'ROOM PARENT: #4'
   end
 
-  def test_command_room_parent_id
+  def command_room_parent_id
     assert_output [1], [[:ROOM_PARENT, '"Orchard"', :id]], 'ROOM PARENT: "Orchard"'
   end
 
-  def test_command_room_zone_reset
+  def command_room_zone_reset
     assert_output [1], [[:ROOM_ZONE, nil, nil]], 'ROOM ZONE:'
   end
 
-  def test_command_room_zone_raw
+  def command_room_zone_raw
     assert_output [1], [[:ROOM_ZONE, '#5', :raw]], 'ROOM ZONE: #5'
   end
 
-  def test_command_room_zone_id
+  def command_room_zone_id
     assert_output [1], [[:ROOM_ZONE, '"Lilac"', :id]], 'ROOM ZONE: "Lilac"'
   end
 
-  def test_command_room_flags_reset
+  def command_room_flags_reset
     assert_output [1], [[:ROOM_FLAGS, nil]], 'ROOM FLAGS:'
   end
 
-  def test_command_room_flags_set
+  def command_room_flags_set
     str = "TRANSPARENT"
     assert_output [1], [[:ROOM_FLAGS, str]], "ROOM FLAGS: #{str}"
   end
 
 
-  def test_command_exit_parent_reset
+  def command_exit_parent_reset
     assert_output [1], [[:EXIT_PARENT, nil, nil]], 'EXIT PARENT:'
   end
 
-  def test_command_exit_parent_raw
+  def command_exit_parent_raw
     assert_output [1], [[:EXIT_PARENT, '#6', :raw]], 'EXIT PARENT: #6'
   end
 
-  def test_command_exit_parent_id
+  def command_exit_parent_id
     assert_output [1], [[:EXIT_PARENT, '"Daisy"', :id]], 'EXIT PARENT: "Daisy"'
   end
 
-  def test_command_exit_zone_reset
+  def command_exit_zone_reset
     assert_output [1], [[:EXIT_ZONE, nil, nil]], 'EXIT ZONE:'
   end
 
-  def test_command_exit_zone_raw
+  def command_exit_zone_raw
     assert_output [1], [[:EXIT_ZONE, '#7', :raw]], 'EXIT ZONE: #7'
   end
 
-  def test_command_exit_zone_id
+  def command_exit_zone_id
     assert_output [1], [[:EXIT_ZONE, '"Aster"', :id]], 'EXIT ZONE: "Aster"'
   end
 
-  def test_command_exit_flags_reset
+  def command_exit_flags_reset
     assert_output [1], [[:EXIT_FLAGS, nil]], 'EXIT FLAGS:'
   end
 
-  def test_command_exit_flags_set
+  def command_exit_flags_set
     str = "TRANSPARENT"
     assert_output [1], [[:EXIT_FLAGS, str]], "EXIT FLAGS: #{str}"
   end
 
-  def test_command_describe
+  def command_describe
     str1 = "Serene Town"
     str2 = "A peaceful place"
     assert_output [1], [[:BUFFER_ROOM, "\"#{str1}\"", "\n@describe here=\"#{str2}\""]], "DESCRIBE \"#{str1}\"=\"#{str2}\""
   end
 
-  def test_command_in
+  def command_in
     assert_output [1,2,3], [
       [:NOP],
       [:BUFFER_ROOM, '"Golden Land"', "\n@describe here=A beautiful place."],
@@ -116,7 +115,7 @@ module Directives
 EOS
   end
 
-  def test_command_on
+  def command_on
     assert_output [1,2,3], [
       [:NOP],
       [:BUFFER_EXIT, '"Ashen Land"', '"Palace"', "\n@describe here=A wonderous place."],
@@ -128,7 +127,7 @@ EOS
 EOS
   end
 
-  def test_command_in_with_comment
+  def command_in_with_comment
     assert_output [1,2,3,4], [
       [:NOP],
       [:BUFFER_ROOM, '"Emerald Pillar"', "\n@describe here=A tower of carved emerald."],
@@ -142,7 +141,7 @@ EOS
 EOS
   end
 
-  def test_command_on
+  def command_on
     assert_output [1,2,3,4], [
       [:NOP],
       [:BUFFER_EXIT, '"Galaxy Gateway"', '"Portal 5"', "\n@describe here=The stars are calling!"],
@@ -156,7 +155,7 @@ EOS
 EOS
   end
 
-  def test_command_one_way_construction
+  def command_one_way_construction
     assert_output [1,1,1], [
       [:CREATE_ROOM, '"In the Fire"'],
       [:CREATE_ROOM, '"Rising in Smoke"'],
@@ -164,7 +163,7 @@ EOS
     ], '"burn" : "In the Fire" -> "Rising in Smoke"'
   end
 
-  def test_command_one_way_construction_extended
+  def command_one_way_construction_extended
     assert_output [1,1,1,1,1], [
       [:CREATE_ROOM, '"In the Fire"'],
       [:CREATE_ROOM, '"Rising in Smoke"'],
@@ -174,7 +173,7 @@ EOS
     ], '"burn" : "In the Fire" -> "Rising in Smoke" -> "Away in The Breeze"'
   end
 
-  def test_command_two_way_construction
+  def command_two_way_construction
     assert_output [1,1,1,1], [
       [:CREATE_ROOM, '"Green Zone"'],
       [:CREATE_ROOM, '"Blue Zone"'],
@@ -183,7 +182,7 @@ EOS
     ], '"shorter" : "Green Zone" <-> "Blue Zone"'
   end
 
-  def test_command_two_way_construction_extended
+  def command_two_way_construction_extended
     assert_output [1,1,1,1,1,1,1], [
       [:CREATE_ROOM, '"Green Zone"'],
       [:CREATE_ROOM, '"Blue Zone"'],
@@ -198,6 +197,9 @@ end
 
 class UnitTests < MiniTest::Unit::TestCase
   include Directives
+  instance_methods.
+    select {|name| /^command_/ =~ name}.
+    each {|sym| alias_method "test_#{sym.to_s}", sym}
 
   def make_fakefile(lines)
     FakeFile.new(lines.gsub(/^ */, ''))
