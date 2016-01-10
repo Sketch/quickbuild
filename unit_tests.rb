@@ -297,3 +297,79 @@ class MultilineTest < MiniTest::Unit::TestCase
   end
 
 end
+
+class WarningDuringModesTest < MiniTest::Unit::TestCase
+  include Directives
+
+  def make_fakefile(lines)
+    FakeFile.new(lines.gsub(/^ */, ''))
+  end
+
+  def line_in
+    assert_output [1], [[:NOP]], "IN \"#{@room_name}\"", :real_line
+  end
+
+  def line_endin
+    assert_output [1], [[:NOP]], 'ENDIN', :real_line
+  end
+
+  def line_out
+    assert_output [1], [[:NOP]], 'ON "Beat" FROM "Measure"', :real_line
+  end
+
+  def line_endout
+    assert_output [1], [[:NOP]], 'ENDON', :real_line
+  end
+
+  def random_name
+    (('a'..'z').to_a + [' '] * 4).sample(7).join('').strip.capitalize
+  end
+
+  def assert_output(steps, output, input, real_line = nil)
+    if real_line
+      @stepping += steps.map {|step| @current_line + step}
+      @total_output += output
+    else
+      @total_output += [
+        [:WARNING, "Directive matched inside \"IN\" state: '#{input}'"],
+        [:BUFFER_ROOM, "\"#{@room_name}\"", "\n#{input}"]
+      ]
+      @stepping += ([1,1,2]).map {|step| @current_line + step}
+    end
+    @current_line = @stepping.last
+    @total_input << input.chomp
+  end
+
+  def test_warnings_for_in
+    method_syms = self.methods.select {|symbol| /^command_/ =~ symbol}
+    method_syms -= [:command_on, :command_in]
+    method_syms -= [:command_comment_line]
+    method_syms -= [:command_in_with_comment]
+    methods = method_syms.map {|sym| method(sym)}
+    methods.each do |method|
+      @current_line = 0
+      @total_output = []
+      @total_input = []
+      @stepping = []
+      @room_name = random_name
+      line_in
+      method.call()
+      line_endin
+      assert_multiline(@stepping, @total_output, @total_input.join("\n"))
+    end
+  end
+
+  def test_warnings_for_on
+  end
+
+  def assert_multiline(steps, instruction_array, string)
+    incrementer = steps.to_enum
+    fakefile = make_fakefile(string)
+    output = process_file(fakefile)
+    expected = instruction_array.map {|opcode|
+      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
+    }
+    assert_equal expected, output
+  end
+
+end

@@ -13,7 +13,7 @@ end
 class ActionWIND < SimpleAction
 	def unhandled_call(state, input, extra)
 		return nil if state == :error
-		return {:state => nil, :action => [[:WARNING, "#{@pattern} matched inside \"#{getstate(state)}\" state."]]} if state != :default
+		return {:state => nil, :action => [[:WARNING, "Directive matched inside \"#{getstate(state).upcase}\" state: '#{input.rstrip}'"]]} if state != :default
 	end
 end
 
@@ -108,7 +108,7 @@ class InputStateMachine
 
     @machine.push ActionWIND.new(/^ROOM FLAGS:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, nil]] ]}] )
-    @machine.push ActionWIND.new(/^ROOM FLAGS:\s*(.*)\s*$/,
+    @machine.push ActionWIND.new(/^ROOM FLAGS:\s*(.+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, e[:matchdata][1]]] ]}] )
 
     @machine.push ActionWIND.new(/^EXIT PARENT:\s*$/,
@@ -127,7 +127,7 @@ class InputStateMachine
 
     @machine.push ActionWIND.new(/^EXIT FLAGS:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, nil]] ]}] )
-    @machine.push ActionWIND.new(/^EXIT FLAGS:\s*(.*)\s*$/,
+    @machine.push ActionWIND.new(/^EXIT FLAGS:\s*(.+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, e[:matchdata][1]]] ]}] )
 
     @machine.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)\s*$/,
