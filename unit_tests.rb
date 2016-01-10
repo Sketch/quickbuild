@@ -314,7 +314,7 @@ class WarningDuringModesTest < MiniTest::Unit::TestCase
   end
 
   def line_out
-    assert_output [1], [[:NOP]], 'ON "Beat" FROM "Measure"', :real_line
+    assert_output [1], [[:NOP]], "ON \"#{@exit_name}\" FROM \"#{@room_name}\"", :real_line
   end
 
   def line_endout
@@ -358,6 +358,27 @@ class WarningDuringModesTest < MiniTest::Unit::TestCase
       assert_multiline(@stepping, @total_output, @total_input.join("\n"))
     end
   end
+
+  def test_warnings_for_on
+    method_syms = self.methods.select {|symbol| /^command_/ =~ symbol}
+    method_syms -= [:command_on, :command_in]
+    method_syms -= [:command_comment_line]
+    method_syms -= [:command_in_with_comment]
+    methods = method_syms.map {|sym| method(sym)}
+    methods.each do |method|
+      @current_line = 0
+      @total_output = []
+      @total_input = []
+      @stepping = []
+      @room_name = random_name
+      @exit_name = random_name
+      line_on
+      method.call()
+      line_endon
+      assert_multiline(@stepping, @total_output, @total_input.join("\n"))
+    end
+  end
+
 
   def test_warnings_for_on
   end
