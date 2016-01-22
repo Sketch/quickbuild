@@ -317,6 +317,18 @@ class WarningDuringModeTests < MiniTest::Unit::TestCase
     assert_equal expected, output
   end
 
+  def assert_output(steps, output, input, real_line = nil)
+    if real_line
+      @stepping += steps.map {|step| @current_line + step}
+      @total_output += output
+    else
+      @stepping += ([1,1,2]).map {|step| @current_line + step}
+      @total_output += warning_expectation(input)
+    end
+    @current_line = @stepping.last
+    @total_input << input.chomp
+  end
+
 end
 
 class WarningDuringINModeTest < WarningDuringModeTests
@@ -330,19 +342,11 @@ class WarningDuringINModeTest < WarningDuringModeTests
     assert_output [1], [[:NOP]], 'ENDIN', :real_line
   end
 
-  def assert_output(steps, output, input, real_line = nil)
-    if real_line
-      @stepping += steps.map {|step| @current_line + step}
-      @total_output += output
-    else
-      @total_output += [
-        [:WARNING, "Directive matched inside \"IN\" state: '#{input}'"],
-        [:BUFFER_ROOM, "\"#{@room_name}\"", "\n#{input}"]
-      ]
-      @stepping += ([1,1,2]).map {|step| @current_line + step}
-    end
-    @current_line = @stepping.last
-    @total_input << input.chomp
+  def warning_expectation(input)
+    [
+      [:WARNING, "Directive matched inside \"IN\" state: '#{input}'"],
+      [:BUFFER_ROOM, "\"#{@room_name}\"", "\n#{input}"]
+    ]
   end
 
   def test_warnings_for_in
@@ -377,19 +381,11 @@ class WarningDuringONModeTest < WarningDuringModeTests
     assert_output [1], [[:NOP]], 'ENDON', :real_line
   end
 
-  def assert_output(steps, output, input, real_line = nil)
-    if real_line
-      @stepping += steps.map {|step| @current_line + step}
-      @total_output += output
-    else
-      @total_output += [
-        [:WARNING, "Directive matched inside \"ON\" state: '#{input}'"],
-        [:BUFFER_EXIT, "\"#{@room_name}\"", "\"#{@exit_name}\"", "\n#{input}"]
-      ]
-      @stepping += ([1,1,2]).map {|step| @current_line + step}
-    end
-    @current_line = @stepping.last
-    @total_input << input.chomp
+  def warning_expectation(input)
+    [
+      [:WARNING, "Directive matched inside \"ON\" state: '#{input}'"],
+      [:BUFFER_EXIT, "\"#{@room_name}\"", "\"#{@exit_name}\"", "\n#{input}"]
+    ]
   end
 
   def test_warnings_for_on
