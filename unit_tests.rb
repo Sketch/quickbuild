@@ -317,12 +317,16 @@ class WarningDuringModeTests < MiniTest::Unit::TestCase
     assert_equal expected, output
   end
 
+  def add_current_line(expected_steps_for_new_output)
+    expected_steps_for_new_output.map {|step| @current_line + step}
+  end
+
   def assert_output(steps, output, input, real_line = nil)
     if real_line
-      @stepping += steps.map {|step| @current_line + step}
+      @stepping += add_current_line(steps)
       @total_output += output
     else
-      @stepping += ([1,1,2]).map {|step| @current_line + step}
+      @stepping += add_current_line([1,1,2])
       @total_output += warning_expectation(input)
     end
     @current_line = @stepping.last
