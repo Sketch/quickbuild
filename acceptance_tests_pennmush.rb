@@ -1,5 +1,9 @@
 class PennMUSHController
 
+  def initialize(debug = false)
+    @debug = debug
+  end
+
   def sysdo(array)
     system(array.join(' && '))
   end
@@ -65,7 +69,7 @@ class PennMUSHController
   end
 
   def debug(msg)
-    puts "--QBTester: #{msg}"
+    puts "--QBTester: #{msg}" if @debug
   end
 
   def establish_connection
@@ -84,7 +88,7 @@ class PennMUSHController
     File.delete(outdb) if File.exist?(outdb)
     sysdo([
       'cd ' + File.join(%w[test-pennmush game]),
-      './restart',
+      './restart' + (@debug ? '' : ' 1>/dev/null 2>/dev/null'),
     ])
     debug "Establishing socket"
     @pennsocket = establish_connection
