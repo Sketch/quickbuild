@@ -12,99 +12,99 @@ end
 
 module Directives
   def command_comment_line
-    assert_output [1], [[:NOP]], "# Comment lines begin with a pound."
+    add_conversion_expectation [1], [[:NOP]], "# Comment lines begin with a pound."
   end
 
   def command_attr_base
     str = "juniper_town"
-    assert_output [1], [[:ATTR_BASE, str]], "ATTR BASE: #{str}"
+    add_conversion_expectation [1], [[:ATTR_BASE, str]], "ATTR BASE: #{str}"
   end
 
   def command_alias
     str1 = "S"
     str2 = "South"
-    assert_output [1], [[:ALIAS, "\"#{str1}\"", str2]], "ALIAS \"#{str1}\" \"#{str2}\""
+    add_conversion_expectation [1], [[:ALIAS, "\"#{str1}\"", str2]], "ALIAS \"#{str1}\" \"#{str2}\""
   end
 
   def command_reverse
-    assert_output [1], [[:REVERSE, '"Ana"', '"Kata"']], 'REVERSE "Ana" "Kata"'
+    add_conversion_expectation [1], [[:REVERSE, '"Ana"', '"Kata"']], 'REVERSE "Ana" "Kata"'
   end
 
   def command_room_parent_reset
-    assert_output [1], [[:ROOM_PARENT, nil, nil]], 'ROOM PARENT:'
+    add_conversion_expectation [1], [[:ROOM_PARENT, nil, nil]], 'ROOM PARENT:'
   end
 
   def command_room_parent_raw
-    assert_output [1], [[:ROOM_PARENT, '#4', :raw]], 'ROOM PARENT: #4'
+    add_conversion_expectation [1], [[:ROOM_PARENT, '#4', :raw]], 'ROOM PARENT: #4'
   end
 
   def command_room_parent_id
-    assert_output [1], [[:ROOM_PARENT, '"Orchard"', :id]], 'ROOM PARENT: "Orchard"'
+    add_conversion_expectation [1], [[:ROOM_PARENT, '"Orchard"', :id]], 'ROOM PARENT: "Orchard"'
   end
 
   def command_room_zone_reset
-    assert_output [1], [[:ROOM_ZONE, nil, nil]], 'ROOM ZONE:'
+    add_conversion_expectation [1], [[:ROOM_ZONE, nil, nil]], 'ROOM ZONE:'
   end
 
   def command_room_zone_raw
-    assert_output [1], [[:ROOM_ZONE, '#5', :raw]], 'ROOM ZONE: #5'
+    add_conversion_expectation [1], [[:ROOM_ZONE, '#5', :raw]], 'ROOM ZONE: #5'
   end
 
   def command_room_zone_id
-    assert_output [1], [[:ROOM_ZONE, '"Lilac"', :id]], 'ROOM ZONE: "Lilac"'
+    add_conversion_expectation [1], [[:ROOM_ZONE, '"Lilac"', :id]], 'ROOM ZONE: "Lilac"'
   end
 
   def command_room_flags_reset
-    assert_output [1], [[:ROOM_FLAGS, nil]], 'ROOM FLAGS:'
+    add_conversion_expectation [1], [[:ROOM_FLAGS, nil]], 'ROOM FLAGS:'
   end
 
   def command_room_flags_set
     str = "TRANSPARENT"
-    assert_output [1], [[:ROOM_FLAGS, str]], "ROOM FLAGS: #{str}"
+    add_conversion_expectation [1], [[:ROOM_FLAGS, str]], "ROOM FLAGS: #{str}"
   end
 
 
   def command_exit_parent_reset
-    assert_output [1], [[:EXIT_PARENT, nil, nil]], 'EXIT PARENT:'
+    add_conversion_expectation [1], [[:EXIT_PARENT, nil, nil]], 'EXIT PARENT:'
   end
 
   def command_exit_parent_raw
-    assert_output [1], [[:EXIT_PARENT, '#6', :raw]], 'EXIT PARENT: #6'
+    add_conversion_expectation [1], [[:EXIT_PARENT, '#6', :raw]], 'EXIT PARENT: #6'
   end
 
   def command_exit_parent_id
-    assert_output [1], [[:EXIT_PARENT, '"Daisy"', :id]], 'EXIT PARENT: "Daisy"'
+    add_conversion_expectation [1], [[:EXIT_PARENT, '"Daisy"', :id]], 'EXIT PARENT: "Daisy"'
   end
 
   def command_exit_zone_reset
-    assert_output [1], [[:EXIT_ZONE, nil, nil]], 'EXIT ZONE:'
+    add_conversion_expectation [1], [[:EXIT_ZONE, nil, nil]], 'EXIT ZONE:'
   end
 
   def command_exit_zone_raw
-    assert_output [1], [[:EXIT_ZONE, '#7', :raw]], 'EXIT ZONE: #7'
+    add_conversion_expectation [1], [[:EXIT_ZONE, '#7', :raw]], 'EXIT ZONE: #7'
   end
 
   def command_exit_zone_id
-    assert_output [1], [[:EXIT_ZONE, '"Aster"', :id]], 'EXIT ZONE: "Aster"'
+    add_conversion_expectation [1], [[:EXIT_ZONE, '"Aster"', :id]], 'EXIT ZONE: "Aster"'
   end
 
   def command_exit_flags_reset
-    assert_output [1], [[:EXIT_FLAGS, nil]], 'EXIT FLAGS:'
+    add_conversion_expectation [1], [[:EXIT_FLAGS, nil]], 'EXIT FLAGS:'
   end
 
   def command_exit_flags_set
     str = "TRANSPARENT"
-    assert_output [1], [[:EXIT_FLAGS, str]], "EXIT FLAGS: #{str}"
+    add_conversion_expectation [1], [[:EXIT_FLAGS, str]], "EXIT FLAGS: #{str}"
   end
 
   def command_describe
     str1 = "Serene Town"
     str2 = "A peaceful place"
-    assert_output [1], [[:BUFFER_ROOM, "\"#{str1}\"", "\n@describe here=\"#{str2}\""]], "DESCRIBE \"#{str1}\"=\"#{str2}\""
+    add_conversion_expectation [1], [[:BUFFER_ROOM, "\"#{str1}\"", "\n@describe here=\"#{str2}\""]], "DESCRIBE \"#{str1}\"=\"#{str2}\""
   end
 
   def command_in
-    assert_output [1,2,3], [
+    add_conversion_expectation [1,2,3], [
       [:NOP],
       [:BUFFER_ROOM, '"Golden Land"', "\n@describe here=A beautiful place."],
       [:NOP]
@@ -116,7 +116,7 @@ EOS
   end
 
   def command_on
-    assert_output [1,2,3], [
+    add_conversion_expectation [1,2,3], [
       [:NOP],
       [:BUFFER_EXIT, '"Ashen Land"', '"Palace"', "\n@describe here=A wonderous place."],
       [:NOP]
@@ -128,7 +128,7 @@ EOS
   end
 
   def command_in_with_comment
-    assert_output [1,2,3,4], [
+    add_conversion_expectation [1,2,3,4], [
       [:NOP],
       [:BUFFER_ROOM, '"Emerald Pillar"', "\n@describe here=A tower of carved emerald."],
       [:BUFFER_ROOM, '"Emerald Pillar"', "\n# Uh-oh."],
@@ -142,7 +142,7 @@ EOS
   end
 
   def command_on
-    assert_output [1,2,3,4], [
+    add_conversion_expectation [1,2,3,4], [
       [:NOP],
       [:BUFFER_EXIT, '"Galaxy Gateway"', '"Portal 5"', "\n@describe here=The stars are calling!"],
       [:BUFFER_EXIT, '"Galaxy Gateway"', '"Portal 5"', "\n# Oh no!"],
@@ -156,7 +156,7 @@ EOS
   end
 
   def command_one_way_construction
-    assert_output [1,1,1], [
+    add_conversion_expectation [1,1,1], [
       [:CREATE_ROOM, '"In the Fire"'],
       [:CREATE_ROOM, '"Rising in Smoke"'],
       [:CREATE_EXIT, '"burn"', '"In the Fire"', '"Rising in Smoke"'],
@@ -164,7 +164,7 @@ EOS
   end
 
   def command_one_way_construction_extended
-    assert_output [1,1,1,1,1], [
+    add_conversion_expectation [1,1,1,1,1], [
       [:CREATE_ROOM, '"In the Fire"'],
       [:CREATE_ROOM, '"Rising in Smoke"'],
       [:CREATE_EXIT, '"burn"', '"In the Fire"', '"Rising in Smoke"'],
@@ -174,7 +174,7 @@ EOS
   end
 
   def command_two_way_construction
-    assert_output [1,1,1,1], [
+    add_conversion_expectation [1,1,1,1], [
       [:CREATE_ROOM, '"Green Zone"'],
       [:CREATE_ROOM, '"Blue Zone"'],
       [:CREATE_EXIT, '"shorter"', '"Green Zone"', '"Blue Zone"'],
@@ -183,7 +183,7 @@ EOS
   end
 
   def command_two_way_construction_extended
-    assert_output [1,1,1,1,1,1,1], [
+    add_conversion_expectation [1,1,1,1,1,1,1], [
       [:CREATE_ROOM, '"Green Zone"'],
       [:CREATE_ROOM, '"Blue Zone"'],
       [:CREATE_EXIT, '"shorter"', '"Green Zone"', '"Blue Zone"'],
@@ -205,7 +205,7 @@ class UnitTests < MiniTest::Unit::TestCase
     FakeFile.new(lines.gsub(/^ */, ''))
   end
 
-  def assert_output(steps, instruction_array, string)
+  def add_conversion_expectation(steps, instruction_array, string)
     incrementer = steps.to_enum
     fakefile = make_fakefile(string)
     output = process_file(fakefile)
@@ -217,19 +217,19 @@ class UnitTests < MiniTest::Unit::TestCase
 
   def test_invalid_command
     bogusness = 'ZOP BOB B-DOWOP BEZAM BAM BOOM'
-    assert_output [1], [[:ERROR, "Unrecognized command: #{bogusness}"]], "#{bogusness}"
+    add_conversion_expectation [1], [[:ERROR, "Unrecognized command: #{bogusness}"]], "#{bogusness}"
   end
 
   def test_invalid_endin_outside_in_block
-    assert_output [1], [[:ERROR, 'ENDIN outside of IN-block.']], 'ENDIN'
+    add_conversion_expectation [1], [[:ERROR, 'ENDIN outside of IN-block.']], 'ENDIN'
   end
 
   def test_invalid_endon_outside_on_block
-    assert_output [1], [[:ERROR, 'ENDON outside of ON-block.']], 'ENDON'
+    add_conversion_expectation [1], [[:ERROR, 'ENDON outside of ON-block.']], 'ENDON'
   end
 
   def test_invalid_endon_inside_in_block
-    assert_output [1,2], [
+    add_conversion_expectation [1,2], [
       [:NOP],
       [:ERROR, 'ENDON inside of IN-block.']
     ], <<-EOS
@@ -239,7 +239,7 @@ EOS
   end
 
   def test_invalid_endin_inside_on_block
-    assert_output [1,2], [
+    add_conversion_expectation [1,2], [
       [:NOP],
       [:ERROR, 'ENDIN inside of ON-block.']
     ], <<-EOS
@@ -249,11 +249,11 @@ EOS
   end
 
   def test_blank_line
-    assert_output [1], [[:NOP]], "\n"
+    add_conversion_expectation [1], [[:NOP]], "\n"
   end
 
   def test_whitespace_line
-    assert_output [1], [[:NOP]], "\t "
+    add_conversion_expectation [1], [[:NOP]], "\t "
   end
 
   # TODO:
@@ -267,7 +267,7 @@ class MultilineTest < MiniTest::Unit::TestCase
     FakeFile.new(lines.gsub(/^ */, ''))
   end
 
-  def assert_output(steps, output, input)
+  def add_conversion_expectation(steps, output, input)
     @line_numbers += steps.map {|step| @current_line + step}
     @current_line = @line_numbers.last
     @total_output += output
@@ -321,7 +321,7 @@ class WarningDuringModeTests < MiniTest::Unit::TestCase
     expected_steps_for_new_output.map {|step| @current_line + step}
   end
 
-  def assert_output(steps, output, input, real_line = nil)
+  def add_conversion_expectation(steps, output, input, real_line = nil)
     expected_new_line_numbers = (real_line ? steps  : [1,1,2] )
     expected_new_line_content = (real_line ? output : warning_expectation(input) )
     @line_numbers += add_current_line(expected_new_line_numbers)
@@ -336,11 +336,11 @@ class WarningDuringINModeTest < WarningDuringModeTests
   include Directives
 
   def line_in
-    assert_output [1], [[:NOP]], "IN \"#{@room_name}\"", :real_line
+    add_conversion_expectation [1], [[:NOP]], "IN \"#{@room_name}\"", :real_line
   end
 
   def line_endin
-    assert_output [1], [[:NOP]], 'ENDIN', :real_line
+    add_conversion_expectation [1], [[:NOP]], 'ENDIN', :real_line
   end
 
   def warning_expectation(input)
@@ -375,11 +375,11 @@ class WarningDuringONModeTest < WarningDuringModeTests
   include Directives
 
   def line_on
-    assert_output [1], [[:NOP]], "ON \"#{@exit_name}\" FROM \"#{@room_name}\"", :real_line
+    add_conversion_expectation [1], [[:NOP]], "ON \"#{@exit_name}\" FROM \"#{@room_name}\"", :real_line
   end
 
   def line_endon
-    assert_output [1], [[:NOP]], 'ENDON', :real_line
+    add_conversion_expectation [1], [[:NOP]], 'ENDON', :real_line
   end
 
   def warning_expectation(input)
