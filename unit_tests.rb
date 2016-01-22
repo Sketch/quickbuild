@@ -298,7 +298,7 @@ class MultilineTest < MiniTest::Unit::TestCase
 
 end
 
-class WarningDuringModesTest < MiniTest::Unit::TestCase
+class WarningDuringINModeTest < MiniTest::Unit::TestCase
   include Directives
 
   def make_fakefile(lines)
@@ -313,16 +313,18 @@ class WarningDuringModesTest < MiniTest::Unit::TestCase
     assert_output [1], [[:NOP]], 'ENDIN', :real_line
   end
 
-  def line_out
-    assert_output [1], [[:NOP]], "ON \"#{@exit_name}\" FROM \"#{@room_name}\"", :real_line
-  end
-
-  def line_endout
-    assert_output [1], [[:NOP]], 'ENDON', :real_line
-  end
-
   def random_name
     (('a'..'z').to_a + [' '] * 4).sample(7).join('').strip.capitalize
+  end
+
+  def assert_multiline(steps, instruction_array, string)
+    incrementer = steps.to_enum
+    fakefile = make_fakefile(string)
+    output = process_file(fakefile)
+    expected = instruction_array.map {|opcode|
+      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
+    }
+    assert_equal expected, output
   end
 
   def assert_output(steps, output, input, real_line = nil)
@@ -359,6 +361,52 @@ class WarningDuringModesTest < MiniTest::Unit::TestCase
     end
   end
 
+end
+
+class WarningDuringONModeTest < MiniTest::Unit::TestCase
+  include Directives
+
+  def make_fakefile(lines)
+    FakeFile.new(lines.gsub(/^ */, ''))
+  end
+
+  def line_on
+    assert_output [1], [[:NOP]], "ON \"#{@exit_name}\" FROM \"#{@room_name}\"", :real_line
+  end
+
+  def line_endon
+    assert_output [1], [[:NOP]], 'ENDON', :real_line
+  end
+
+  def random_name
+    (('a'..'z').to_a + [' '] * 4).sample(7).join('').strip.capitalize
+  end
+
+  def assert_multiline(steps, instruction_array, string)
+    incrementer = steps.to_enum
+    fakefile = make_fakefile(string)
+    output = process_file(fakefile)
+    expected = instruction_array.map {|opcode|
+      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
+    }
+    assert_equal expected, output
+  end
+
+  def assert_output(steps, output, input, real_line = nil)
+    if real_line
+      @stepping += steps.map {|step| @current_line + step}
+      @total_output += output
+    else
+      @total_output += [
+        [:WARNING, "Directive matched inside \"ON\" state: '#{input}'"],
+        [:BUFFER_EXIT, "\"#{@room_name}\"", "\"#{@exit_name}\"", "\n#{input}"]
+      ]
+      @stepping += ([1,1,2]).map {|step| @current_line + step}
+    end
+    @current_line = @stepping.last
+    @total_input << input.chomp
+  end
+
   def test_warnings_for_on
     method_syms = self.methods.select {|symbol| /^command_/ =~ symbol}
     method_syms -= [:command_on, :command_in]
@@ -377,20 +425,6 @@ class WarningDuringModesTest < MiniTest::Unit::TestCase
       line_endon
       assert_multiline(@stepping, @total_output, @total_input.join("\n"))
     end
-  end
-
-
-  def test_warnings_for_on
-  end
-
-  def assert_multiline(steps, instruction_array, string)
-    incrementer = steps.to_enum
-    fakefile = make_fakefile(string)
-    output = process_file(fakefile)
-    expected = instruction_array.map {|opcode|
-      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
-    }
-    assert_equal expected, output
   end
 
 end
