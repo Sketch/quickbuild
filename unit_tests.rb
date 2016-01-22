@@ -298,19 +298,9 @@ class MultilineTest < MiniTest::Unit::TestCase
 
 end
 
-class WarningDuringINModeTest < MiniTest::Unit::TestCase
-  include Directives
-
+class WarningDuringModeTests < MiniTest::Unit::TestCase
   def make_fakefile(lines)
     FakeFile.new(lines.gsub(/^ */, ''))
-  end
-
-  def line_in
-    assert_output [1], [[:NOP]], "IN \"#{@room_name}\"", :real_line
-  end
-
-  def line_endin
-    assert_output [1], [[:NOP]], 'ENDIN', :real_line
   end
 
   def random_name
@@ -325,6 +315,19 @@ class WarningDuringINModeTest < MiniTest::Unit::TestCase
       {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
     }
     assert_equal expected, output
+  end
+
+end
+
+class WarningDuringINModeTest < WarningDuringModeTests
+  include Directives
+
+  def line_in
+    assert_output [1], [[:NOP]], "IN \"#{@room_name}\"", :real_line
+  end
+
+  def line_endin
+    assert_output [1], [[:NOP]], 'ENDIN', :real_line
   end
 
   def assert_output(steps, output, input, real_line = nil)
@@ -363,12 +366,8 @@ class WarningDuringINModeTest < MiniTest::Unit::TestCase
 
 end
 
-class WarningDuringONModeTest < MiniTest::Unit::TestCase
+class WarningDuringONModeTest < WarningDuringModeTests
   include Directives
-
-  def make_fakefile(lines)
-    FakeFile.new(lines.gsub(/^ */, ''))
-  end
 
   def line_on
     assert_output [1], [[:NOP]], "ON \"#{@exit_name}\" FROM \"#{@room_name}\"", :real_line
@@ -376,20 +375,6 @@ class WarningDuringONModeTest < MiniTest::Unit::TestCase
 
   def line_endon
     assert_output [1], [[:NOP]], 'ENDON', :real_line
-  end
-
-  def random_name
-    (('a'..'z').to_a + [' '] * 4).sample(7).join('').strip.capitalize
-  end
-
-  def assert_multiline(steps, instruction_array, string)
-    incrementer = steps.to_enum
-    fakefile = make_fakefile(string)
-    output = process_file(fakefile)
-    expected = instruction_array.map {|opcode|
-      {:location => {:file => fakefile.path, :linenumber => incrementer.next}, :opcode => opcode}
-    }
-    assert_equal expected, output
   end
 
   def assert_output(steps, output, input, real_line = nil)
