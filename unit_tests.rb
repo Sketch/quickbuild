@@ -268,8 +268,8 @@ class MultilineTest < MiniTest::Unit::TestCase
   end
 
   def assert_output(steps, output, input)
-    @stepping += steps.map {|step| @current_line + step}
-    @current_line = @stepping.last
+    @line_numbers += steps.map {|step| @current_line + step}
+    @current_line = @line_numbers.last
     @total_output += output
     @total_input << input.chomp
   end
@@ -278,12 +278,12 @@ class MultilineTest < MiniTest::Unit::TestCase
     @current_line = 0
     @total_output = []
     @total_input = []
-    @stepping = []
+    @line_numbers = []
     method_syms = self.methods.select {|symbol| /^command_/ =~ symbol}
     sample_syms = method_syms.sample(7)
     methods = sample_syms.map {|sym| method(sym) }
     methods.each(&:call)
-    assert_multiline(@stepping, @total_output, @total_input.join("\n"))
+    assert_multiline(@line_numbers, @total_output, @total_input.join("\n"))
   end
 
   def assert_multiline(steps, instruction_array, string)
@@ -323,13 +323,13 @@ class WarningDuringModeTests < MiniTest::Unit::TestCase
 
   def assert_output(steps, output, input, real_line = nil)
     if real_line
-      @stepping += add_current_line(steps)
+      @line_numbers += add_current_line(steps)
       @total_output += output
     else
-      @stepping += add_current_line([1,1,2])
+      @line_numbers += add_current_line([1,1,2])
       @total_output += warning_expectation(input)
     end
-    @current_line = @stepping.last
+    @current_line = @line_numbers.last
     @total_input << input.chomp
   end
 
@@ -363,12 +363,12 @@ class WarningDuringINModeTest < WarningDuringModeTests
       @current_line = 0
       @total_output = []
       @total_input = []
-      @stepping = []
+      @line_numbers = []
       @room_name = random_name
       line_in
       method.call()
       line_endin
-      assert_multiline(@stepping, @total_output, @total_input.join("\n"))
+      assert_multiline(@line_numbers, @total_output, @total_input.join("\n"))
     end
   end
 
@@ -402,13 +402,13 @@ class WarningDuringONModeTest < WarningDuringModeTests
       @current_line = 0
       @total_output = []
       @total_input = []
-      @stepping = []
+      @line_numbers = []
       @room_name = random_name
       @exit_name = random_name
       line_on
       method.call()
       line_endon
-      assert_multiline(@stepping, @total_output, @total_input.join("\n"))
+      assert_multiline(@line_numbers, @total_output, @total_input.join("\n"))
     end
   end
 
