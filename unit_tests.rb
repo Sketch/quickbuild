@@ -322,15 +322,12 @@ class WarningDuringModeTests < MiniTest::Unit::TestCase
   end
 
   def assert_output(steps, output, input, real_line = nil)
-    if real_line
-      @line_numbers += add_current_line(steps)
-      @total_output += output
-    else
-      @line_numbers += add_current_line([1,1,2])
-      @total_output += warning_expectation(input)
-    end
+    expected_new_line_numbers = (real_line ? steps  : [1,1,2] )
+    expected_new_line_content = (real_line ? output : warning_expectation(input) )
+    @line_numbers += add_current_line(expected_new_line_numbers)
     @current_line = @line_numbers.last
     @total_input << input.chomp
+    @total_output += expected_new_line_content
   end
 
 end
