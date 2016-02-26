@@ -23,7 +23,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
   end
 
   def construct_and_send_grid(quickbuild_string)
-    quickbuild_string_array = quickbuild_string.split("\n").map(&:strip)
+    quickbuild_string_array = quickbuild_string.split("\n").map(&:strip).delete_if(&:empty?)
     Tempfile.open('quickbuild_tests') do |file|
       file.write(quickbuild_string_array.join("\n"))
       file.rewind
@@ -84,11 +84,43 @@ EOS
     assert_equal @exits, db[:exits]
   end
 
+  def test_idemppotency_1
+    room "Blue NW"
+    room "Green N"
+    room "Yellow NE"
+    room "Indigo W"
+    room "Purple SW"
+    room "Red S"
+    room "Infrared SE"
+    link "e", "Blue NW", "Green N"
+    link "e", "Green N", "Yellow NE"
+    link "s", "Blue NW", "Indigo W"
+    link "s", "Indigo W", "Purple SW"
+    link "e", "Purple SW", "Red S"
+    link "e", "Red S", "Infrared SE"
+
+    construct_and_send_grid %q(
+      "e" : "Blue NW" -> "Green N" -> "Yellow NE"
+      "s" : "Blue NW" -> "Indigo W" -> "Purple SW"
+      "e" : "Purple SW" -> "Red S" -> "Infrared SE"
+    )
+
+    construct_and_send_grid %q(
+      "e" : "Blue NW" -> "Green N" -> "Yellow NE"
+      "s" : "Blue NW" -> "Indigo W" -> "Purple SW"
+      "e" : "Purple SW" -> "Red S" -> "Infrared SE"
+    )
+
+    @pennmush.dump
+    db = @pennmush.dbparse
+    assert_equal @rooms, db[:rooms]
+    assert_equal @exits, db[:exits]
+  end
+
   # TODO: Tests to write:
   # Basic Grid Creation
   # Parent/Zone application with room-ordering properties
   # Tag tests (Maze test)
-  # Idempotency tests
   # Shop exits feature
   # Error tests:
   #  - Ensure "No entrance to Room X" appears
