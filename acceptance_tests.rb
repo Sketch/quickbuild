@@ -117,8 +117,22 @@ EOS
     assert_equal @exits, db[:exits]
   end
 
+  def test_reverse_1
+    room "Top"
+    room "Middle"
+    room "Bottom"
+    link "u", "Bottom", "Middle"
+    link "u", "Middle", "Top"
+    link "d",    "Top", "Middle"
+    link "d", "Middle", "Bottom"
+
+    construct_and_send_grid %q(
+      reverse "u" "d"
+      "u" : "Bottom" <-> "Middle" <-> "Top"
+    )
+  end
+
   # TODO: Tests to write:
-  # Basic Grid Creation
   # Parent/Zone application with room-ordering properties
   # Tag tests (Maze test)
   # Shop exits feature
