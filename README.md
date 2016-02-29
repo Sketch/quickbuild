@@ -114,7 +114,7 @@ An input file for *Quickbuild* can include the following:
 
 Lines beginning with # are considered comments and ignored.
 In an IN or ON section (see <a href="#custom-code">Custom Code</a>),
-only lines beginning with @@ are ignored.
+no lines are ignored.
 
 ### Building commands
 
@@ -238,10 +238,10 @@ you can add custom code that will be executed in a given room like this:
     ...MUSH commands...
     ENDIN
 
-You can add custom code that will be executed in a given room like this:
+You can add custom code that will be executed near a given exit like this:
 
-    ON "Exit Name" FROM "Source Room Name
-    ...MUSH code in mpp format here...
+    ON "Exit Name" FROM "Source Room Name"
+    ...MUSH commands...
     ENDON
 
 * * *
