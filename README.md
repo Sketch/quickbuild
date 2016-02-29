@@ -235,7 +235,7 @@ If you need to do more than just @describe a room,
 you can add custom code that will be executed in a given room like this:
 
     IN "Room Name"
-    ...MUSH code in mpp format here...
+    ...MUSH commands...
     ENDIN
 
 You can add custom code that will be executed in a given room like this:
@@ -243,25 +243,6 @@ You can add custom code that will be executed in a given room like this:
     ON "Exit Name" FROM "Source Room Name
     ...MUSH code in mpp format here...
     ENDON
-
-mpp format is the format defined by Josh Bell's mpp (MUSH preprocessor)
-program. It  works like this:
-
-1. Blank lines and lines starting with @@ are removed.
-
-2. A non-whitespace, non-'&gt;' character in the first
-  column indicates the start of a new line of MUSHcode.
-
-3. Leading whitespace on a line is otherwise stripped,
-  and indicates the line is a continuation of the previous line
-
-4. (not implemented by *Quickbuild*) Lines starting with '\*'
-  (in the first column) are treated
-  as continuations and are converted from plain ASCII to
-  "MUSH-ready" ASCII, i.e. spaces -&gt; %b, \[ -&gt; \[, etc. %r
-  characters are prepended to any subsequent &gt; lines.
-
-5. In any other line, each tab is converted to a space.
 
 * * *
 # OPTIONS
