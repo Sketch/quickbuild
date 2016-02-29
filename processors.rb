@@ -13,7 +13,7 @@ end
 class ActionWIND < SimpleAction
 	def unhandled_call(state, input, extra)
 		return nil if state == :error
-		return {:state => nil, :action => [[:WARNING, "Directive matched inside \"#{getstate(state).upcase}\" state: '#{input.rstrip}'"]]} if state != :default
+		return [nil, [[:WARNING, "Directive matched inside \"#{getstate(state).upcase}\" state: '#{input.rstrip}'"]] ] if state != :default
 	end
 end
 
@@ -141,7 +141,7 @@ class InputStateMachine
           commands.push([:CREATE_REVERSE_EXIT, exitname, lastroom, match[1]]) if match[0] == "<->"
           lastroom = match[1]
         }
-        return {:state => s, :action => commands}
+        return [s, commands]
       }])
 
     @machine.push ActionWIND.new(/^IN\s+(".*"(?:[^->\s]\S*)?)\s*$/,
