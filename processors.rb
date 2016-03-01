@@ -71,7 +71,6 @@ class StateMachine
 end
 
 class InputStateMachine
-  attr_reader :machine
   def initialize
     @machine = StateMachine.new
     @machine.add_tristate_action(/^\s*$/,
