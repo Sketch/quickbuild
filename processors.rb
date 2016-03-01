@@ -1,4 +1,4 @@
-VERSION='2.20'
+VERSION='2.30'
 
 def buffer_prefix(s)
 	return (/^\s+/.match(s) ? "" : "\n") + s.sub(/^\s+/,'').gsub(/\t/,' ')
