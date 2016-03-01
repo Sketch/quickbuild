@@ -133,6 +133,7 @@ EOS
   end
 
   # TODO: Tests to write:
+  # Ensure that multiple BUFFER_ROOM ops behave correctly
   # Parent/Zone application with room-ordering properties
   # Tag tests (Maze test)
   # Shop exits feature

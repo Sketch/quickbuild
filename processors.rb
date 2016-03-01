@@ -2,21 +2,6 @@ require_relative 'statemachine'
 
 VERSION='2.20'
 
-# Section: Input file parser
-class Action < SimpleAction
-	def unhandled_call(state, input, extra)
-		return nil if state == :error
-	end
-end
-
-# ActionWarnIfNotDefault
-class ActionWIND < SimpleAction
-	def unhandled_call(state, input, extra)
-		return nil if state == :error
-		return [nil, [[:WARNING, "Directive matched inside \"#{getstate(state).upcase}\" state: '#{input.rstrip}'"]] ] if state != :default
-	end
-end
-
 def buffer_prefix(s)
 	return (/^\s+/.match(s) ? "" : "\n") + s.sub(/^\s+/,'').gsub(/\t/,' ')
 end
@@ -55,15 +40,48 @@ end
 # Most state modifiers here return the current_state as the new_state,
 # to preserve values in current_state.
 
+# Section: Input file parser
+class Action < SimpleAction
+	def unhandled_call(state, input, extra)
+		return nil if state == :error
+	end
+end
+
+# ActionWarnIfNotDefault
+class ActionWIND < SimpleAction
+	def unhandled_call(state, input, extra)
+		return nil if state == :error
+		return [nil, [[:WARNING, "Directive matched inside \"#{getstate(state).upcase}\" state: '#{input.rstrip}'"]] ] if state != :default
+	end
+end
+
+class LocalStateMachine
+  def initialize
+    @state = :default
+  end
+
+  def invoke(input_line, extra_info)
+    return if @state == :error
+  end
+
+  def add_tristate_action(line_matcher, state_action_pairs)
+    @action_table += state_action_pairs.map {|pair| [line_matcher] + pair}
+  end
+
+  def add_default_only_action(line_matcher, state_action_pairs)
+    @action_table << ([line_matcher] + state_action_pairs[0])
+  end
+end
+
 class InputStateMachine
   attr_reader :machine
   def initialize
-    @machine = StateMachine.new(:default)
-    @machine.push Action.new(/^\s*$/,
+    @machine = LocalStateMachine.new
+    @machine.add_tristate_action(/^\s*$/,
       [:default, lambda{|s| [s,[[:NOP]] ]}],
       [:in,      lambda{|s| [s,[[:NOP]] ]}],
       [:on,      lambda{|s| [s,[[:NOP]] ]}] )
-    @machine.push Action.new(/^@@/,
+    @machine.add_tristate_action(/^@@/,
       [:in, lambda{|s| [s,[[:NOP]] ]}],
       [:on, lambda{|s| [s,[[:NOP]] ]}] )
 
@@ -74,63 +92,63 @@ class InputStateMachine
       command = [[:BUFFER_EXIT, s[:roomname], s[:exitname], str]] if s[:state] == :ON
       return [s.merge({:bracketline => e[:linenumber]}), command]
     }
-    @machine.push Action.new(/^>/,
+    @machine.add_tristate_action(/^>/,
       [:in, closebracket],
       [:on, closebracket])
 
-    @machine.push Action.new(/^#.*$/,
+    @machine.add_tristate_action(/^#.*$/,
       [:default, lambda {|s| [s, [[:NOP]]]}],
       [:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
       [:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
-    @machine.push ActionWIND.new(/^ATTR BASE:\s*(.*)$/,
+    @machine.add_basestate_action(/^ATTR BASE:\s*(.*)$/,
       [:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
 
-    @machine.push ActionWIND.new(/^ALIAS\s*:?\s*(".*")\s*"(.*)"\s*$/i,
+    @machine.add_basestate_action(/^ALIAS\s*:?\s*(".*")\s*"(.*)"\s*$/i,
       [:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 
-    @machine.push ActionWIND.new(/^REVERSE\s*:?\s*(".*")\s*(".*")\s*$/i,
+    @machine.add_basestate_action(/^REVERSE\s*:?\s*(".*")\s*(".*")\s*$/i,
       [:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 
-    @machine.push ActionWIND.new(/^ROOM PARENT:\s*$/,
+    @machine.add_basestate_action(/^ROOM PARENT:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, nil, nil]] ]}] )
-    @machine.push ActionWIND.new(/^ROOM PARENT:\s*(#\d+)\s*$/,
+    @machine.add_basestate_action(/^ROOM PARENT:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :raw]] ]}] )
-    @machine.push ActionWIND.new(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    @machine.add_basestate_action(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :id]] ]}] )
 
-    @machine.push ActionWIND.new(/^ROOM ZONE:\s*$/,
+    @machine.add_basestate_action(/^ROOM ZONE:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, nil, nil]] ]}] )
-    @machine.push ActionWIND.new(/^ROOM ZONE:\s*(#\d+)\s*$/,
+    @machine.add_basestate_action(/^ROOM ZONE:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :raw]] ]}] )
-    @machine.push ActionWIND.new(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    @machine.add_basestate_action(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :id]] ]}] )
 
-    @machine.push ActionWIND.new(/^ROOM FLAGS:\s*$/,
+    @machine.add_basestate_action(/^ROOM FLAGS:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, nil]] ]}] )
-    @machine.push ActionWIND.new(/^ROOM FLAGS:\s*(.+)\s*$/,
+    @machine.add_basestate_action(/^ROOM FLAGS:\s*(.+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, e[:matchdata][1]]] ]}] )
 
-    @machine.push ActionWIND.new(/^EXIT PARENT:\s*$/,
+    @machine.add_basestate_action(/^EXIT PARENT:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, nil, nil]] ]}] )
-    @machine.push ActionWIND.new(/^EXIT PARENT:\s*(#\d+)\s*$/,
+    @machine.add_basestate_action(/^EXIT PARENT:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :raw]] ]}] )
-    @machine.push ActionWIND.new(/^EXIT PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    @machine.add_basestate_action(/^EXIT PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :id]] ]}] )
 
-    @machine.push ActionWIND.new(/^EXIT ZONE:\s*$/,
+    @machine.add_basestate_action(/^EXIT ZONE:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, nil, nil]] ]}] )
-    @machine.push ActionWIND.new(/^EXIT ZONE:\s*(#\d+)\s*$/,
+    @machine.add_basestate_action(/^EXIT ZONE:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :raw]] ]}] )
-    @machine.push ActionWIND.new(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    @machine.add_basestate_action(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :id]] ]}] )
 
-    @machine.push ActionWIND.new(/^EXIT FLAGS:\s*$/,
+    @machine.add_basestate_action(/^EXIT FLAGS:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, nil]] ]}] )
-    @machine.push ActionWIND.new(/^EXIT FLAGS:\s*(.+)\s*$/,
+    @machine.add_basestate_action(/^EXIT FLAGS:\s*(.+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, e[:matchdata][1]]] ]}] )
 
-    @machine.push ActionWIND.new(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)\s*$/,
+    @machine.add_basestate_action(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)\s*$/,
       [:default, lambda {|s,i,e|
         exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
         lastroom = e[:matchdata][3]
@@ -144,26 +162,26 @@ class InputStateMachine
         return [s, commands]
       }])
 
-    @machine.push ActionWIND.new(/^IN\s+(".*"(?:[^->\s]\S*)?)\s*$/,
+    @machine.add_basestate_action(/^IN\s+(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
-    @machine.push ActionWIND.new(/^ON\s+(".*")\s+FROM\s+(".*"(?:[^->\s]\S*)?)\s*$/,
+    @machine.add_basestate_action(/^ON\s+(".*")\s+FROM\s+(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][2], :exitname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
-    @machine.push Action.new(/^ENDIN\s*$/,
+    @machine.add_tristate_action(/^ENDIN\s*$/,
       [:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
       [:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDIN outside of IN-block."]] ]}],
       [:on,      lambda {|s,i,e| [:default, [[:ERROR, "ENDIN inside of ON-block."]] ]}] )
 
-    @machine.push Action.new(/^ENDON\s*$/,
+    @machine.add_tristate_action(/^ENDON\s*$/,
       [:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
       [:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
       [:in,      lambda {|s,i,e| [:default, [[:ERROR, "ENDON inside of IN-block."]] ]}] )
 
-    @machine.push ActionWIND.new(/^DESC(?:RIBE)?\s+(".*?"(?:[^=->\s]\S*)?)\s*=\s*(.*)$/,
+    @machine.add_basestate_action(/^DESC(?:RIBE)?\s+(".*?"(?:[^=->\s]\S*)?)\s*=\s*(.*)$/,
       [:default, lambda {|s,i,e| [s, [[:BUFFER_ROOM, e[:matchdata][1], "\n@describe here=" + e[:matchdata][2]]] ]}] )
 
-    @machine.push Action.new(/^.+$/,
+    @machine.add_tristate_action(/^.+$/,
       [:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command: #{e[:matchdata][0]}"]] ]}],
       [:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
       [:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
