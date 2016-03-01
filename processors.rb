@@ -1,5 +1,3 @@
-require_relative 'statemachine'
-
 VERSION='2.20'
 
 def buffer_prefix(s)
@@ -14,76 +12,75 @@ def buffer_escape(s)
 	return s.gsub(ESCAPE_REGEXP, ESCAPE_HASH)
 end
 
-# Make a state machine to handle input file format.
-#
-# (Documentation copied from statemachine.rb)
-# State machines have an ordered list of Actions.
-# Actions have a pattern (arg1) and a list of state modifiers (arg2)
-# Input is given one line at a time.
-# Each Action's pattern is checked against the input line.
-# If an Action's pattern matches, and has an entry for the current state,
-#  that state modifier is executed. Otherwise, matching proceeds down the list.
-#
-# The state modifier is called with up to 3 arguments depending on its arity.
-# The arguments are, in order: (current_state, input_line, extra_information)
-# * current_state is a hash with (user-defined) state information, and
-#   the :state key is used to compare if an Action's state entry matches.
-# * input_line is the current input.
-# * extra_information is a hash of user-defined key-value pairs. It also has a
-#   :matchdata key, which is the MatchData for the Action's matched pattern.
-#
-# State modifiers return [new_state, command_list]. New_state can be
-# a :symbol, or a hash with a :state => desired_state. Command_list is
-# a list of [:command_name, argument1, argument2, ...]. Exactly what these
-# mean is up to the application.
-# (End)
-# Most state modifiers here return the current_state as the new_state,
-# to preserve values in current_state.
-
-# Section: Input file parser
-class Action < SimpleAction
-	def unhandled_call(state, input, extra)
-		return nil if state == :error
-	end
+def write_room_buffer
+  lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}
+end
+def write_exit_buffer
+  lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}
 end
 
-# ActionWarnIfNotDefault
-class ActionWIND < SimpleAction
-	def unhandled_call(state, input, extra)
-		return nil if state == :error
-		return [nil, [[:WARNING, "Directive matched inside \"#{getstate(state).upcase}\" state: '#{input.rstrip}'"]] ] if state != :default
-	end
-end
-
-class LocalStateMachine
+class StateMachine
   def initialize
-    @state = :default
+    @state = {:state => :default}
+    @action_table = []
   end
 
-  def invoke(input_line, extra_info)
-    return if @state == :error
+  def invoke(input, extra_info)
+    return nil if @state == :error
+    input_line = input.strip
+    actual_state = @state[:state]
+    action = @action_table.detect {|regexp, state, _action| actual_state == state && regexp =~ input_line }
+
+    extra_info.merge!( {:matchdata => Regexp.last_match} )
+    ret_state, *operations = action[2].call(@state, input_line, extra_info)
+    @state = case ret_state
+      when Hash then ret_state
+      when Symbol then {:state => ret_state}
+      when nil then @state
+      end
+
+    return [@state, operations]
   end
 
-  def add_tristate_action(line_matcher, state_action_pairs)
+  def add_tristate_action(line_matcher, *state_action_pairs)
     @action_table += state_action_pairs.map {|pair| [line_matcher] + pair}
   end
 
-  def add_default_only_action(line_matcher, state_action_pairs)
-    @action_table << ([line_matcher] + state_action_pairs[0])
+  def add_basestate_action(line_matcher, state_action_pairs)
+    @action_table << ([line_matcher] + state_action_pairs)
+    @warn_room ||= lambda(&method(:warn_during_in_mode))
+    @warn_exit ||= lambda(&method(:warn_during_on_mode))
+    @action_table << [line_matcher, :in, @warn_room]
+    @action_table << [line_matcher, :on, @warn_exit]
   end
+
+  def warn_during_in_mode(state, input, extra)
+		[nil, [
+      [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"],
+      write_room_buffer.call(state, input, extra).last.first
+    ]]
+  end
+
+  def warn_during_on_mode(state, input, extra)
+		[nil, [
+      [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"],
+      write_exit_buffer.call(state, input, extra).last.first
+    ]]
+  end
+
 end
 
 class InputStateMachine
   attr_reader :machine
   def initialize
-    @machine = LocalStateMachine.new
+    @machine = StateMachine.new
     @machine.add_tristate_action(/^\s*$/,
-      [:default, lambda{|s| [s,[[:NOP]] ]}],
-      [:in,      lambda{|s| [s,[[:NOP]] ]}],
-      [:on,      lambda{|s| [s,[[:NOP]] ]}] )
+      [:default, lambda{|s,i,e| [s,[[:NOP]] ]}],
+      [:in,      lambda{|s,i,e| [s,[[:NOP]] ]}],
+      [:on,      lambda{|s,i,e| [s,[[:NOP]] ]}] )
     @machine.add_tristate_action(/^@@/,
-      [:in, lambda{|s| [s,[[:NOP]] ]}],
-      [:on, lambda{|s| [s,[[:NOP]] ]}] )
+      [:in, lambda{|s,i,e| [s,[[:NOP]] ]}],
+      [:on, lambda{|s,i,e| [s,[[:NOP]] ]}] )
 
     closebracket = lambda {|s,input,e|
       str = (s[:bracketline] == e[:linenumber] - 1) ? '%r' : ''
@@ -97,7 +94,7 @@ class InputStateMachine
       [:on, closebracket])
 
     @machine.add_tristate_action(/^#.*$/,
-      [:default, lambda {|s| [s, [[:NOP]]]}],
+      [:default, lambda {|s,i,e| [s, [[:NOP]]]}],
       [:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
       [:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
@@ -183,8 +180,8 @@ class InputStateMachine
 
     @machine.add_tristate_action(/^.+$/,
       [:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command: #{e[:matchdata][0]}"]] ]}],
-      [:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
-      [:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
+      [:in,      write_room_buffer],
+      [:on,      write_exit_buffer])
 
     def invoke(*args)
       @machine.invoke(*args)
