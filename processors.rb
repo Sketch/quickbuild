@@ -28,7 +28,7 @@ class StateMachine
   end
 
   def invoke(input, extra_info)
-    return nil if @state == :error
+    return nil if @state == {:state => :error}
     input_line = input.strip
     actual_state = @state[:state]
     action = @action_table.detect {|regexp, state, _action| actual_state == state && regexp =~ input_line }
