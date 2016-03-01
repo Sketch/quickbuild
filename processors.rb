@@ -48,8 +48,8 @@ class StateMachine
     @action_table += state_action_pairs.map {|pair| [line_matcher] + pair}
   end
 
-  def add_basestate_action(line_matcher, state_action_pairs)
-    @action_table << ([line_matcher] + state_action_pairs)
+  def add_basestate_action(line_matcher, state_action_pair)
+    @action_table << ([line_matcher] + state_action_pair)
     @action_table << [line_matcher, :in, @warn_room]
     @action_table << [line_matcher, :on, @warn_exit]
   end
