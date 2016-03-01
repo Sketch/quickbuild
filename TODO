@@ -1,3 +1,7 @@
+Fixes:
+
+ROOM PARENT: [nothing] is not processed if it is the first line of a file.
+
 Small features:
 
 * Improve exit bracket handling: (aliasify)
