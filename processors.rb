@@ -23,6 +23,8 @@ class StateMachine
   def initialize
     @state = {:state => :default}
     @action_table = []
+    @warn_room ||= lambda(&method(:warn_during_in_mode))
+    @warn_exit ||= lambda(&method(:warn_during_on_mode))
   end
 
   def invoke(input, extra_info)
@@ -48,8 +50,6 @@ class StateMachine
 
   def add_basestate_action(line_matcher, state_action_pairs)
     @action_table << ([line_matcher] + state_action_pairs)
-    @warn_room ||= lambda(&method(:warn_during_in_mode))
-    @warn_exit ||= lambda(&method(:warn_during_on_mode))
     @action_table << [line_matcher, :in, @warn_room]
     @action_table << [line_matcher, :on, @warn_exit]
   end
