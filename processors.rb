@@ -54,16 +54,20 @@ class StateMachine
     @action_table << [line_matcher, :on, @warn_exit]
   end
 
+  def write_warning(state, input)
+    [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"]
+  end
+
   def warn_during_in_mode(state, input, extra)
 		[nil, [
-      [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"],
+      write_warning(state, input),
       write_room_buffer.call(state, input, extra).last.first
     ]]
   end
 
   def warn_during_on_mode(state, input, extra)
 		[nil, [
-      [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"],
+      write_warning(state, input),
       write_exit_buffer.call(state, input, extra).last.first
     ]]
   end
