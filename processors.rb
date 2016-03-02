@@ -35,12 +35,7 @@ class StateMachine
 
     extra_info.merge!( {:matchdata => action[0].match(input_line)} )
     ret_state, *operations = action[2].call(@state, input_line, extra_info)
-    @state = case ret_state
-      when Hash then ret_state
-      when Symbol then {:state => ret_state}
-      when nil then @state
-      end
-
+    @state = new_state(ret_state, @state)
     return [@state, operations]
   end
 
@@ -56,6 +51,14 @@ class StateMachine
 
   def write_warning(state, input)
     [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"]
+  end
+
+  def new_state(ret_state, current_state)
+    case ret_state
+      when Hash then ret_state
+      when Symbol then {:state => ret_state}
+      when nil then current_state
+    end
   end
 
   def warn_during_in_mode(state, input, extra)
