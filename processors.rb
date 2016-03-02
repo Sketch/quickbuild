@@ -49,6 +49,8 @@ class StateMachine
     @action_table << [line_matcher, :on, @warn_exit]
   end
 
+  private
+
   def write_warning(state, input)
     [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"]
   end
