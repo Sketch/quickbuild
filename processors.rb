@@ -33,7 +33,7 @@ class StateMachine
     actual_state = @state[:state]
     action = @action_table.detect {|regexp, state, _action| actual_state == state && regexp =~ input_line }
 
-    extra_info.merge!( {:matchdata => Regexp.last_match} )
+    extra_info.merge!( {:matchdata => action[0].match(input_line)} )
     ret_state, *operations = action[2].call(@state, input_line, extra_info)
     @state = case ret_state
       when Hash then ret_state
