@@ -39,6 +39,8 @@ class StateMachine
     return [@state, operations]
   end
 
+  private
+
   def add_tristate_action(line_matcher, *state_action_pairs)
     @action_table += state_action_pairs.map {|pair| [line_matcher] + pair}
   end
@@ -48,8 +50,6 @@ class StateMachine
     @action_table << [line_matcher, :in, @warn_room]
     @action_table << [line_matcher, :on, @warn_exit]
   end
-
-  private
 
   def write_warning(state, input)
     [:WARNING, "Directive matched inside \"#{state[:state].upcase}\" state: '#{input.rstrip}'"]
@@ -79,14 +79,18 @@ class StateMachine
 
 end
 
-class InputStateMachine
+class InputStateMachine < StateMachine
   def initialize
-    @machine = StateMachine.new
-    @machine.add_tristate_action(/^\s*$/,
+    super
+    define_actions
+  end
+
+  private def define_actions
+    add_tristate_action(/^\s*$/,
       [:default, lambda{|s,i,e| [s,[[:NOP]] ]}],
       [:in,      lambda{|s,i,e| [s,[[:NOP]] ]}],
       [:on,      lambda{|s,i,e| [s,[[:NOP]] ]}] )
-    @machine.add_tristate_action(/^@@/,
+    add_tristate_action(/^@@/,
       [:in, lambda{|s,i,e| [s,[[:NOP]] ]}],
       [:on, lambda{|s,i,e| [s,[[:NOP]] ]}] )
 
@@ -97,63 +101,63 @@ class InputStateMachine
       command = [[:BUFFER_EXIT, s[:roomname], s[:exitname], str]] if s[:state] == :ON
       return [s.merge({:bracketline => e[:linenumber]}), command]
     }
-    @machine.add_tristate_action(/^>/,
+    add_tristate_action(/^>/,
       [:in, closebracket],
       [:on, closebracket])
 
-    @machine.add_tristate_action(/^#.*$/,
+    add_tristate_action(/^#.*$/,
       [:default, lambda {|s,i,e| [s, [[:NOP]]]}],
       [:in,      lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}],
       [:on,      lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}] )
 
-    @machine.add_basestate_action(/^ATTR BASE:\s*(.*)$/,
+    add_basestate_action(/^ATTR BASE:\s*(.*)$/,
       [:default, lambda {|s,i,e| [s, [[:ATTR_BASE, e[:matchdata][1]]] ]}] )
 
-    @machine.add_basestate_action(/^ALIAS\s*:?\s*(".*")\s*"(.*)"\s*$/i,
+    add_basestate_action(/^ALIAS\s*:?\s*(".*")\s*"(.*)"\s*$/i,
       [:default, lambda {|s,i,e| [s, [[:ALIAS, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 
-    @machine.add_basestate_action(/^REVERSE\s*:?\s*(".*")\s*(".*")\s*$/i,
+    add_basestate_action(/^REVERSE\s*:?\s*(".*")\s*(".*")\s*$/i,
       [:default, lambda {|s,i,e| [s, [[:REVERSE, e[:matchdata][1], e[:matchdata][2]]] ]}] )
 
-    @machine.add_basestate_action(/^ROOM PARENT:\s*$/,
+    add_basestate_action(/^ROOM PARENT:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, nil, nil]] ]}] )
-    @machine.add_basestate_action(/^ROOM PARENT:\s*(#\d+)\s*$/,
+    add_basestate_action(/^ROOM PARENT:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :raw]] ]}] )
-    @machine.add_basestate_action(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    add_basestate_action(/^ROOM PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_PARENT, e[:matchdata][1], :id]] ]}] )
 
-    @machine.add_basestate_action(/^ROOM ZONE:\s*$/,
+    add_basestate_action(/^ROOM ZONE:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, nil, nil]] ]}] )
-    @machine.add_basestate_action(/^ROOM ZONE:\s*(#\d+)\s*$/,
+    add_basestate_action(/^ROOM ZONE:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :raw]] ]}] )
-    @machine.add_basestate_action(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    add_basestate_action(/^ROOM ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_ZONE, e[:matchdata][1], :id]] ]}] )
 
-    @machine.add_basestate_action(/^ROOM FLAGS:\s*$/,
+    add_basestate_action(/^ROOM FLAGS:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, nil]] ]}] )
-    @machine.add_basestate_action(/^ROOM FLAGS:\s*(.+)\s*$/,
+    add_basestate_action(/^ROOM FLAGS:\s*(.+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:ROOM_FLAGS, e[:matchdata][1]]] ]}] )
 
-    @machine.add_basestate_action(/^EXIT PARENT:\s*$/,
+    add_basestate_action(/^EXIT PARENT:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, nil, nil]] ]}] )
-    @machine.add_basestate_action(/^EXIT PARENT:\s*(#\d+)\s*$/,
+    add_basestate_action(/^EXIT PARENT:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :raw]] ]}] )
-    @machine.add_basestate_action(/^EXIT PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    add_basestate_action(/^EXIT PARENT:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_PARENT, e[:matchdata][1], :id]] ]}] )
 
-    @machine.add_basestate_action(/^EXIT ZONE:\s*$/,
+    add_basestate_action(/^EXIT ZONE:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, nil, nil]] ]}] )
-    @machine.add_basestate_action(/^EXIT ZONE:\s*(#\d+)\s*$/,
+    add_basestate_action(/^EXIT ZONE:\s*(#\d+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :raw]] ]}] )
-    @machine.add_basestate_action(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
+    add_basestate_action(/^EXIT ZONE:\s*(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_ZONE, e[:matchdata][1], :id]] ]}] )
 
-    @machine.add_basestate_action(/^EXIT FLAGS:\s*$/,
+    add_basestate_action(/^EXIT FLAGS:\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, nil]] ]}] )
-    @machine.add_basestate_action(/^EXIT FLAGS:\s*(.+)\s*$/,
+    add_basestate_action(/^EXIT FLAGS:\s*(.+)\s*$/,
       [:default, lambda {|s,i,e| [s, [[:EXIT_FLAGS, e[:matchdata][1]]] ]}] )
 
-    @machine.add_basestate_action(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)\s*$/,
+    add_basestate_action(/^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)\s*$/,
       [:default, lambda {|s,i,e|
         exitname, roomstring = e[:matchdata][1], e[:matchdata][2]
         lastroom = e[:matchdata][3]
@@ -167,33 +171,30 @@ class InputStateMachine
         return [s, commands]
       }])
 
-    @machine.add_basestate_action(/^IN\s+(".*"(?:[^->\s]\S*)?)\s*$/,
+    add_basestate_action(/^IN\s+(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [{:state => :in, :roomname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
-    @machine.add_basestate_action(/^ON\s+(".*")\s+FROM\s+(".*"(?:[^->\s]\S*)?)\s*$/,
+    add_basestate_action(/^ON\s+(".*")\s+FROM\s+(".*"(?:[^->\s]\S*)?)\s*$/,
       [:default, lambda {|s,i,e| [{:state => :on, :roomname => e[:matchdata][2], :exitname => e[:matchdata][1]}, [[:NOP]] ]}] )
 
-    @machine.add_tristate_action(/^ENDIN\s*$/,
+    add_tristate_action(/^ENDIN\s*$/,
       [:in,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
       [:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDIN outside of IN-block."]] ]}],
       [:on,      lambda {|s,i,e| [:default, [[:ERROR, "ENDIN inside of ON-block."]] ]}] )
 
-    @machine.add_tristate_action(/^ENDON\s*$/,
+    add_tristate_action(/^ENDON\s*$/,
       [:on,      lambda {|s,i,e| [:default, [[:NOP]] ]}],
       [:default, lambda {|s,i,e| [:error,   [[:ERROR, "ENDON outside of ON-block."]] ]}],
       [:in,      lambda {|s,i,e| [:default, [[:ERROR, "ENDON inside of IN-block."]] ]}] )
 
-    @machine.add_basestate_action(/^DESC(?:RIBE)?\s+(".*?"(?:[^=->\s]\S*)?)\s*=\s*(.*)$/,
+    add_basestate_action(/^DESC(?:RIBE)?\s+(".*?"(?:[^=->\s]\S*)?)\s*=\s*(.*)$/,
       [:default, lambda {|s,i,e| [s, [[:BUFFER_ROOM, e[:matchdata][1], "\n@describe here=" + e[:matchdata][2]]] ]}] )
 
-    @machine.add_tristate_action(/^.+$/,
+    add_tristate_action(/^.+$/,
       [:default, lambda {|s,i,e| [:error, [[:ERROR, "Unrecognized command: #{e[:matchdata][0]}"]] ]}],
       [:in,      write_room_buffer],
       [:on,      write_exit_buffer])
 
-    def invoke(*args)
-      @machine.invoke(*args)
-    end
   end
 end
 
