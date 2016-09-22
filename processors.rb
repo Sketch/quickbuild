@@ -18,7 +18,7 @@ class InputStateMachine
     when /^ENDON\s*$/
       [:error, lineblob, 'ENDON outside of ON-block.', nil]
     else
-      false # Don't change state
+      false # Don't change mode
     end
   end
 
@@ -136,7 +136,7 @@ class InputStateMachine
     when /^ENDON/
       [[:ERROR, "ENDON inside of IN-block."]]
     when /^ENDIN/
-      [[:IMPOSSIBLE]]
+      [[:IMPOSSIBLE]] # Handled in default mode
     else
       warn_if_looks_like_directive(state, lineblob) +
         [[:BUFFER_ROOM, state[2], buffer_prefix(lineblob.last.rstrip)]]
@@ -157,7 +157,7 @@ class InputStateMachine
     when /^ENDIN/
       [[:ERROR, "ENDIN inside of ON-block."]]
     when /^ENDON/
-      [[:IMPOSSIBLE]]
+      [[:IMPOSSIBLE]] # Handled in default mode
     else
       # TODO: Eliminate this order-switch
       warn_if_looks_like_directive(state, lineblob) +
