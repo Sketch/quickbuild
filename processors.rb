@@ -4,21 +4,6 @@ def buffer_prefix(s)
 	return (/^\s+/.match(s) ? "" : "\n") + s.sub(/^\s+/,'').gsub(/\t/,' ')
 end
 
-ESCAPE_CHARS = ['\\','$','%','(',')',',',';','[',']','^','{','}',"\r\n", "\n", "\r"]
-ESCAPE_WITH = ['\\\\','\\$','\\%','\\(','\\)','\\,','\\;','\\[','\\]','\\^','\\{','\\}','%r','%r','%r']
-ESCAPE_REGEXP = Regexp.union(ESCAPE_CHARS)
-ESCAPE_HASH = Hash[ESCAPE_CHARS.zip(ESCAPE_WITH)]
-def buffer_escape(s)
-	return s.gsub(ESCAPE_REGEXP, ESCAPE_HASH)
-end
-
-def write_room_buffer
-  lambda {|s,i,e| [s, [[:BUFFER_ROOM, s[:roomname], buffer_prefix(e[:matchdata][0])]] ]}
-end
-def write_exit_buffer
-  lambda {|s,i,e| [s, [[:BUFFER_EXIT, s[:roomname], s[:exitname], buffer_prefix(e[:matchdata][0])]] ]}
-end
-
 DEFAULT_STATE = [:default, :lineblob, :roomname_for_in_room, :exitname_for_on_exit]
 
 class InputStateMachine
