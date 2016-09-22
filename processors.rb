@@ -1,9 +1,5 @@
 VERSION='2.30'
 
-def buffer_prefix(s)
-	return (/^\s+/.match(s) ? "" : "\n") + s.sub(/^\s+/,'').gsub(/\t/,' ')
-end
-
 DEFAULT_STATE = [:default, :lineblob, :roomname_for_in_room, :exitname_for_on_exit]
 
 class InputStateMachine
@@ -121,6 +117,10 @@ class InputStateMachine
         "\" state: '" + lineblob.last.rstrip + "'"
       ]]
     end
+  end
+
+  def buffer_prefix(s)
+    return (/^\s+/.match(s) ? "" : "\n") + s.sub(/^\s+/,'').gsub(/\t/,' ')
   end
 
   def second_stage_mode_in_room(state, lineblob)
