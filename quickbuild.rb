@@ -56,7 +56,7 @@ options[:nosidefx] = false
 options[:debug] = false
 
 OptionParser.new do |opts|
-	opts.banner = <<EOT.split(/\n/).join("\n")
+  opts.banner = <<EOT.split(/\n/).join("\n")
 Quickbuild v#{VERSION}    - offline MUSH building tool
 Released under the same terms as PennMUSH
 
@@ -70,39 +70,39 @@ enabling easy offline management of a whole MUSH grid.
 
 Usage: quickbuild.rb [options] inputfile1 [inputfile2 [...]] > outfile.txt
 EOT
-	opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of defaults.") do |c|
-		options[:configfilename] = c
-	end
-	opts.on("--no-config-file", "Don't use any configuration file.") do
-		options[:configfilename] = nil
-	end
-	opts.on("-b", "--nobrackets", "Don't detect <B>racket style of exit naming.") do |b|
-		options[:brackets] = !b
-	end
-	opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
-		options[:bidirectional_reverse] = false
-	end
-	opts.on("--unmanaged", "Don't check for existing exits nor ATTR_BASE attributes; Build a new area.") do
-		options[:unmanaged] = true
-	end
-	opts.on('--nosidefx', "Don't generate code containing side-effect functions; code won't work on TinyMUX nor RhostMUSH.") do
-		options[:nosidefx] = true
-		options[:unmanged] = true
-	end
-	opts.on("-d", "--debug", "Show debug output") do
-		options[:debug] = true
-	end
-	opts.on_tail("-h", "--help", "Show this message") do
-		puts opts
-		exit
-	end
+  opts.on("--config-file <filename>", String, "Use <filename> as the configuration file instead of defaults.") do |c|
+    options[:configfilename] = c
+  end
+  opts.on("--no-config-file", "Don't use any configuration file.") do
+    options[:configfilename] = nil
+  end
+  opts.on("-b", "--nobrackets", "Don't detect <B>racket style of exit naming.") do |b|
+    options[:brackets] = !b
+  end
+  opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
+    options[:bidirectional_reverse] = false
+  end
+  opts.on("--unmanaged", "Don't check for existing exits nor ATTR_BASE attributes; Build a new area.") do
+    options[:unmanaged] = true
+  end
+  opts.on('--nosidefx', "Don't generate code containing side-effect functions; code won't work on TinyMUX nor RhostMUSH.") do
+    options[:nosidefx] = true
+    options[:unmanged] = true
+  end
+  opts.on("-d", "--debug", "Show debug output") do
+    options[:debug] = true
+  end
+  opts.on_tail("-h", "--help", "Show this message") do
+    puts opts
+    exit
+  end
 end.parse!
 # Program exits here if user did --help
 
 # Section: Execution
 if options[:debug] then
-	puts "#{options}"
-	puts "#{ARGV}"
+  puts "#{options}"
+  puts "#{ARGV}"
 end
 
 
