@@ -40,6 +40,13 @@ class AcceptanceTests < MiniTest::Unit::TestCase
     @exits.add({:name => name, :source => source, :destination => destination}.merge(features))
   end
 
+  def assert_stated_grid
+    @pennmush.dump
+    db = @pennmush.dbparse
+    assert_equal @rooms, db[:rooms]
+    assert_equal @exits, db[:exits]
+  end
+
   def test_simple_grid
     room "Red Room"
     room "Blue Room"
@@ -51,10 +58,7 @@ class AcceptanceTests < MiniTest::Unit::TestCase
       "Lower"  : "Blue Room" -> "Red Room"
 EOS
 
-    @pennmush.dump
-    db = @pennmush.dbparse
-    assert_equal @rooms, db[:rooms]
-    assert_equal @exits, db[:exits]
+    assert_stated_grid
   end
 
   def test_C_shape
@@ -78,11 +82,9 @@ EOS
       "e" : "Purple SW" -> "Red S" -> "Infrared SE"
 EOS
 
-    @pennmush.dump
-    db = @pennmush.dbparse
-    assert_equal @rooms, db[:rooms]
-    assert_equal @exits, db[:exits]
+    assert_stated_grid
   end
+
 
   def test_idemppotency_1
     room "Blue NW"
@@ -111,10 +113,7 @@ EOS
       "e" : "Purple SW" -> "Red S" -> "Infrared SE"
     )
 
-    @pennmush.dump
-    db = @pennmush.dbparse
-    assert_equal @rooms, db[:rooms]
-    assert_equal @exits, db[:exits]
+    assert_stated_grid
   end
 
   def test_reverse_1
@@ -130,6 +129,8 @@ EOS
       reverse "u" "d"
       "u" : "Bottom" <-> "Middle" <-> "Top"
     )
+
+    assert_stated_grid
   end
 
   # TODO: Tests to write:
