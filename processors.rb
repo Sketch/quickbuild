@@ -685,7 +685,8 @@ def process_graph(graph, options = {})
   end
 
   output << "think Digging Rooms"
-  rooms.reject {|roomnode| roomnode.prebuilt_dbref }.each do |roomnode|
+  dig_rooms = rooms.reject {|roomnode| roomnode.prebuilt_dbref }
+  dig_rooms.each do |roomnode|
     attrname = "#{roomnode.attr_base}#{roomnode.id}"
     if options[:nosidefx] then
       output << "@dig/teleport #{roomnode.name}"
@@ -718,7 +719,7 @@ def process_graph(graph, options = {})
 
   output << "think Linking Rooms"
   rooms.each {|roomnode|
-    output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0
+    output << "think WARNING: Creating room with no exits: #{roomnode.name}" if roomnode.edges.length == 0 && ! roomnode.prebuilt_dbref
     output << "@teleport [v(#{roomnode.attr_base}#{roomnode.id})]" if roomnode.edges.length > 0 || roomnode.buffer != ''
     roomnode.edges.each {|exitedge_id, exitedge|
       shortname = exitedge.name.partition(';')[0]
@@ -750,9 +751,9 @@ def process_graph(graph, options = {})
   }
 
   has_entrance = Hash[graph.edgelist.map {|exitedge| [exitedge.to_room, true] }]
-  (rooms - has_entrance.keys).each {|roomnode|
+  (dig_rooms - has_entrance.keys).each do |roomnode|
     output << "think WARNING: Created room with no entrances: #{roomnode.name}"
-  }
+  end
 
   return output
 end
