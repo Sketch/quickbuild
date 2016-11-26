@@ -97,6 +97,10 @@ module Directives
     add_conversion_expectation [1], [[:EXIT_FLAGS, str]], "EXIT FLAGS: #{str}"
   end
 
+  def command_prebuilt_room
+    add_conversion_expectation [1], [[:PREBUILT_ROOM, '"Rose"', '#11']], 'PREBUILT "Rose" = #11'
+  end
+
   def command_describe
     str1 = "Serene Town"
     str2 = "A peaceful place"

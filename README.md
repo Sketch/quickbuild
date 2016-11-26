@@ -153,6 +153,14 @@ character as different attributes. Name tags are useful when you're building
 things like mazes, or just want to confuse the Players for some reason. :)
 Anywhere you can use a room name, you can also use a name tag.
 
+### Prebuilt rooms
+
+Often, you'll want to build an area off of a pre-existing room in a MUSH,
+such as off of Room Zero(#0). To specify rooms that are pre-built so
+Quickbuild will NOT try to rebuild them, use the Prebuilt directive:
+
+    PREBUILT "Room Zero" = #0
+
 ### Dbref storage
 
 When rooms are built, their dbrefs are stored on the building player

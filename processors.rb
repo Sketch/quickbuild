@@ -86,6 +86,9 @@ class InputStateMachine
     when /^EXIT FLAGS:\s*(.+)\s*$/
       [[:EXIT_FLAGS, $1]]
 
+    when /^PREBUILT[\s:]\s*(".*?"(?:[^->\s]\S*)?)\s*=\s*(#\d+)\s*$/
+      [[:PREBUILT_ROOM, $1, $2]]
+
     when /^(".*?")\s*:\s*((".*?"(?:[^->\s]\S*)?)(\s*(<?->)\s*(".*?"(?:[^->\s]\S*)?))+)\s*$/
       exitname, roomstring, lastroom = $1, $2, $3
       commands = [[:CREATE_ROOM, lastroom]]
@@ -246,9 +249,11 @@ class RoomNode
   attr_accessor :parent, :parent_type
   attr_accessor :zone, :zone_type
   attr_accessor :flags
+  attr_accessor :prebuilt_dbref
   def initialize(id)
     @id = mush_id_format(id)
     @name = id_to_name(id)
+    @prebuilt_dbref = nil
     @type = :room
     @edges = {}
     @attr_base = nil
@@ -314,6 +319,7 @@ class MuGraph
   attr_accessor :id_parents, :id_zones
   def initialize()
     @nodes = {}
+    @prebuilt_rooms = {}
     @edgelist = []
     @id_parents = {}
     @id_zones = {}
@@ -353,6 +359,37 @@ end
 def die(stateobj, message)
   mywarn(stateobj, message, "ERROR:")
   abort
+end
+
+def op_PREBUILT_ROOM(stateobj, operation, operand)
+  graph = stateobj[:graph]
+  if graph[operand[0]] then
+    die("There is already an existing room or prebuilt directive for #{operand[0]} (= #{operand[1]})")
+  end
+  op_CREATE_ROOM(stateobj, operation, operand)
+  graph[operand[0]].prebuilt_dbref = operand[1]
+end
+
+def op_CREATE_ROOM(stateobj, operation, operand)
+  graph = stateobj[:graph]
+  if graph[operand[0]] == nil then
+    room = graph.new_room(operand[0])
+    room.attr_base = stateobj[:attr_base]
+    if stateobj[:room_parent] && operand[0] != stateobj[:room_parent] then
+      room.parent = stateobj[:room_parent]
+      room.parent_type = stateobj[:room_parent_type]
+    end
+    if stateobj[:room_zone] && operand[0] != stateobj[:room_zone] then
+      room.zone = stateobj[:room_zone]
+      room.zone_type = stateobj[:room_zone_type]
+    end
+    room.flags = stateobj[:room_flags]
+    room.set_buffer(graph.id_zones[operand[0]][:buffer]) if graph.id_zones[operand[0]]
+    room.set_buffer(graph.id_parents[operand[0]][:buffer]) if graph.id_parents[operand[0]]
+  end
+  # If we just made a Room Parent/Zone into a real room, make the list reference the real object.
+  graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
+  graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
 end
 
 # Take an opcode array and output a graph.
@@ -459,25 +496,11 @@ def process_opcodes(opcode_array, options = {})
     when :EXIT_FLAGS
       stateobj[:exit_flags] = operand[0]
 
+    when :PREBUILT_ROOM
+      op_PREBUILT_ROOM(stateobj, operation, operand)
+
     when :CREATE_ROOM # Do not error/warn if it exists.
-      if graph[operand[0]] == nil then
-        room = graph.new_room(operand[0])
-        room.attr_base = stateobj[:attr_base]
-        if stateobj[:room_parent] && operand[0] != stateobj[:room_parent] then
-          room.parent = stateobj[:room_parent]
-          room.parent_type = stateobj[:room_parent_type]
-        end
-        if stateobj[:room_zone] && operand[0] != stateobj[:room_zone] then
-          room.zone = stateobj[:room_zone]
-          room.zone_type = stateobj[:room_zone_type]
-        end
-        room.flags = stateobj[:room_flags]
-        room.set_buffer(graph.id_zones[operand[0]][:buffer]) if graph.id_zones[operand[0]]
-        room.set_buffer(graph.id_parents[operand[0]][:buffer]) if graph.id_parents[operand[0]]
-      end
-      # If we just made a Room Parent/Zone into a real room, make the list reference the real object.
-      graph.id_parents.store(operand[0], room) if graph.id_parents.key?(operand[0])
-      graph.id_zones.store(operand[0], room) if graph.id_zones.key?(operand[0])
+      op_CREATE_ROOM(stateobj, operation, operand)
 
     when :CREATE_EXIT
       from_room, to_room = graph[operand[1]], graph[operand[2]]
@@ -657,8 +680,12 @@ def process_graph(graph, options = {})
     }
   end
 
+  rooms.select {|roomnode| roomnode.prebuilt_dbref }.each do |roomnode|
+    output << "&#{roomnode.attr_base}#{roomnode.id} me=#{roomnode.prebuilt_dbref}"
+  end
+
   output << "think Digging Rooms"
-  rooms.each {|roomnode|
+  rooms.reject {|roomnode| roomnode.prebuilt_dbref }.each do |roomnode|
     attrname = "#{roomnode.attr_base}#{roomnode.id}"
     if options[:nosidefx] then
       output << "@dig/teleport #{roomnode.name}"
@@ -687,7 +714,7 @@ def process_graph(graph, options = {})
       output << "@chzone here=[v(#{z.attr_base}#{z.id})]" if roomnode.zone_type == :id
     end
     output << "@set here=#{roomnode.flags}" if roomnode.flags
-  }
+  end
 
   output << "think Linking Rooms"
   rooms.each {|roomnode|

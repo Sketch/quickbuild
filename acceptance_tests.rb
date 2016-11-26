@@ -133,6 +133,18 @@ EOS
     assert_stated_grid
   end
 
+  def test_prebuilt_rooms_1
+    room "FirstRoom"
+    link "Leap", "Room Zero", "FirstRoom"
+
+    construct_and_send_grid %q(
+      PREBUILT "Zero" = #0
+      "Leap" : "Zero" -> "FirstRoom"
+    )
+
+    assert_stated_grid
+  end
+
   # TODO: Tests to write:
   # Ensure that multiple BUFFER_ROOM ops behave correctly
   # Parent/Zone application with room-ordering properties
