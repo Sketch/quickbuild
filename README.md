@@ -155,11 +155,17 @@ Anywhere you can use a room name, you can also use a name tag.
 
 ### Prebuilt rooms
 
-Often, you'll want to build an area off of a pre-existing room in a MUSH,
-such as off of Room Zero(#0). To specify rooms that are pre-built so
-Quickbuild will NOT try to rebuild them, use the Prebuilt directive:
+Quickbuild can be used to maintain areas on a MUSH. In those cases,
+it's likely that you've already built room parents, or rooms that the
+area will be attached to. To make reference to an object already on
+the MUSH, use the PREBUILT directive:
 
-    PREBUILT "Room Zero" = #0
+    PREBUILT "Shifting Maze Entrance" = #1244
+    PREBUILT "Colorful Room Parent" = #222
+
+The name in quotes can then be used as a reference to that object in the
+building directives that follow.  The name is not required to be the actual
+name of the object on the MUSH.
 
 ### Dbref storage
 
