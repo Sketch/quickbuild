@@ -705,7 +705,7 @@ def process_graph(graph, options = {})
         if options[:nosidefx] then
           output << "@parent here=[v(#{p.attr_base}#{p.id})]"
         else
-          output << "think parent(here,[v(#{p.attr_base}#{p.id})])"
+          output << "think null(parent(here,[v(#{p.attr_base}#{p.id})]))"
         end
       end
     end
