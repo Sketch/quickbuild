@@ -596,6 +596,7 @@ end
 
 def process_graph(graph, options = {})
   abort("Cannot use managed mode with --nosidefx option") if ! options[:unmanaged] && options[:nosidefx]
+  abort("Destroying exits is meaningless outside managed mode") if options[:unmanaged] && options[:destructive]
 
   output = []
   rooms = graph.nodes()
@@ -697,6 +698,10 @@ def process_graph(graph, options = {})
     else
       output << "think set(me,#{attrname}:[default(me/#{attrname},switch(functions(),* DIG *,dig(#{roomnode.name}),create(#{roomnode.name},,r)))])"
       output << "@teleport [v(#{attrname})]"
+      if options[:destructive]
+        output << "think null(iter(lexits(here),[tel(##,me)][destroy(##)]))"
+        output << "@dolist/inline [lexits(here)]={@recycle ##; @recycle ##}"
+      end
     end
     if roomnode.parent then
       output << "@parent here=#{roomnode.parent}" if roomnode.parent_type == :raw

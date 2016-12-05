@@ -52,6 +52,7 @@ options[:configfilename] = ['.qbcfg', 'qb.cfg', ENV['HOME'] + '.qbcfg', ENV['HOM
 options[:unmanaged] = false
 options[:brackets] = true
 options[:bidirectional_reverse] = true
+options[:destructive] = false
 options[:nosidefx] = false
 options[:debug] = false
 
@@ -81,6 +82,9 @@ EOT
   end
   opts.on('--noreverse', "REVERSE command is bi-directional by default; make it one-way.") do
     options[:bidirectional_reverse] = false
+  end
+  opts.on('--destructive', "Destroy each room's exits before building new ones.") do
+    options[:destructive] = true
   end
   opts.on("--unmanaged", "Don't check for existing exits nor ATTR_BASE attributes; Build a new area.") do
     options[:unmanaged] = true

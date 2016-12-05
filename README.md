@@ -295,6 +295,23 @@ can make exits, parent() that alters parents, setr() and r(), and a switch()
 that does wildcard matching.
 (All codebases are assumed to have ifelse(), t(), and v().)
 
+### --destructive
+
+By default, *Quickbuild* will not change the destination of any exits.
+However, that behavior can lead to exits not pointing to where they should.
+Use this option to make *Quickbuild* generate code to destroy all exits
+in a room before building new ones.
+Rooms specified by PREBUILT directive will not have their exits destroyed;
+Be sure to adjust the exit destinations from PREBUILT rooms manually if
+their destinations should be changed.
+These errors will appear when using this flag, and can be ignored:
+
+- PennMUSH:  "Exits can only be teleported to other rooms."
+- RhostMUSH: "That's terrific, but what should I do with the list?"
+- TinyMUX:   "Unrecognized switch ‘inline’ for command ‘@dolist’."
+
+NOTE: This option requires managed mode, and depends on the codebase having both tel() and destroy().
+
 ### --nobrackets
 
 By default, *Quickbuild* assumes that you like the &lt;B&gt;racket style
